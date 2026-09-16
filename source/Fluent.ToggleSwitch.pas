@@ -1,4 +1,4 @@
-﻿unit ToggleSwitch;
+﻿unit Fluent.ToggleSwitch;
 
 interface
 
@@ -16,15 +16,15 @@ uses
   Winapi.GDIPOBJ;
 
 type
-  TTextPosition = (tpLeft, tpRight);
+  TFluentTextPosition = (tpLeft, tpRight);
 
-  THeaderPosition = (hpTop, hpBottom);
+  TFluentHeaderPosition = (hpTop, hpBottom);
 
-  TInteractionState = (isNormal, isHover, isPressed, isDisabled);
+  TFluentInteractionState = (isNormal, isHover, isPressed, isDisabled);
 
   // Everything an interaction state contributes to the drawing. Kept as values
   // so a state change can animate from whatever is currently on screen.
-  TVisualState = record
+  TFluentVisualState = record
     ThumbW, ThumbH: Single;
     ThumbOffX, ThumbOnX: Single;
     TrackOff, StrokeOff, TrackOn: ARGB;
@@ -61,8 +61,8 @@ type
     FAnimStartTime: Int64;
     FAnimFrequency: Int64;
     FSliding: Boolean;
-    FState: TInteractionState;
-    FStateFrom: TVisualState;
+    FState: TFluentInteractionState;
+    FStateFrom: TFluentVisualState;
     FStateT: Single;
     FStateStartTime: Int64;
     FStateDuration: Integer;
@@ -75,13 +75,13 @@ type
     FTextOn: string;
     FTextOff: string;
     FShowText: Boolean;
-    FTextPosition: TTextPosition;
+    FTextPosition: TFluentTextPosition;
     FTextSpacing: Integer;
     FTextWidth: Integer;
     FTextHeight: Integer;
     FShowHeader: Boolean;
     FHeaderText: string;
-    FHeaderPosition: THeaderPosition;
+    FHeaderPosition: TFluentHeaderPosition;
     FHeaderAlignment: TAlignment;
     FHeaderSpacing: Integer;
     FHeaderFont: TFont;
@@ -98,13 +98,13 @@ type
     function DragTravel: Single;
     procedure DragThumb(X: Integer);
     procedure CancelPress;
-    function GetInteractionState: TInteractionState;
+    function GetInteractionState: TFluentInteractionState;
     function CurrentScale: Single;
     function TextGap: Integer;
     function HeaderGap: Integer;
     function HeaderBand: Integer;
-    function StateVisual(S: TInteractionState): TVisualState;
-    function CurrentVisual: TVisualState;
+    function StateVisual(S: TFluentInteractionState): TFluentVisualState;
+    function CurrentVisual: TFluentVisualState;
     procedure UpdateVisualState;
     procedure Toggle;
     procedure SetTrackFrameColor(Value: TColor);
@@ -119,11 +119,11 @@ type
     procedure SetShowText(Value: Boolean);
     procedure SetShowFocus(Value: Boolean);
     procedure UpdateFocusVisibility;
-    procedure SetTextPosition(Value: TTextPosition);
+    procedure SetTextPosition(Value: TFluentTextPosition);
     procedure SetTextSpacing(Value: Integer);
     procedure SetShowHeader(Value: Boolean);
     procedure SetHeaderText(const Value: string);
-    procedure SetHeaderPosition(Value: THeaderPosition);
+    procedure SetHeaderPosition(Value: TFluentHeaderPosition);
     procedure SetHeaderAlignment(Value: TAlignment);
     procedure SetHeaderSpacing(Value: Integer);
     procedure SetHeaderFont(Value: TFont);
@@ -202,11 +202,11 @@ type
     property ShowText: Boolean read FShowText write SetShowText default False;
     property TextOn: string read FTextOn write SetTextOn stored IsTextOnStored;
     property TextOff: string read FTextOff write SetTextOff stored IsTextOffStored;
-    property TextPosition: TTextPosition read FTextPosition write SetTextPosition default tpRight;
+    property TextPosition: TFluentTextPosition read FTextPosition write SetTextPosition default tpRight;
     property TextSpacing: Integer read FTextSpacing write SetTextSpacing default 12;
     property ShowHeader: Boolean read FShowHeader write SetShowHeader default False;
     property HeaderText: string read FHeaderText write SetHeaderText;
-    property HeaderPosition: THeaderPosition read FHeaderPosition write SetHeaderPosition default hpTop;
+    property HeaderPosition: TFluentHeaderPosition read FHeaderPosition write SetHeaderPosition default hpTop;
     property HeaderAlignment: TAlignment read FHeaderAlignment write SetHeaderAlignment default taCenter;
     property HeaderSpacing: Integer read FHeaderSpacing write SetHeaderSpacing default 6;
     property HeaderFont: TFont read FHeaderFont write SetHeaderFont stored FHeaderFontCustom;
@@ -248,20 +248,20 @@ const
   // Thumb geometry per interaction state. When pressed the thumb becomes a
   // 17x14 pill hugging the track edge, so its center shifts inward.
   //                                                      Normal  Hover  Pressed  Disabled
-  ThumbWidths:  array[TInteractionState] of Integer =   (12,     14,    17,      12);
-  ThumbHeights: array[TInteractionState] of Integer =   (12,     14,    14,      12);
+  ThumbWidths:  array[TFluentInteractionState] of Integer =   (12,     14,    17,      12);
+  ThumbHeights: array[TFluentInteractionState] of Integer =   (12,     14,    14,      12);
   // Thumb center from the left edge of the track
-  ThumbCenterOffX: array[TInteractionState] of Single = (10,      10,    11.5,    10);
-  ThumbCenterOnX:  array[TInteractionState] of Single = (30,      30,    28.5,    30);
+  ThumbCenterOffX: array[TFluentInteractionState] of Single = (10,      10,    11.5,    10);
+  ThumbCenterOnX:  array[TFluentInteractionState] of Single = (30,      30,    28.5,    30);
 
   // Colors are ARGB ($AARRGGBB) from the WinUI 3 Light theme. Off-state colors
   // are translucent black blended over the parent background; the On track has
   // no stroke of its own.
   //                                                    Normal     Hover      Pressed    Disabled
-  OffTrackFill:   array[TInteractionState] of ARGB = ($06000000, $0F000000, $18000000, $00000000);
-  OffTrackStroke: array[TInteractionState] of ARGB = ($72000000, $72000000, $72000000, $37000000);
-  OffThumbFill:   array[TInteractionState] of ARGB = ($9E000000, $9E000000, $9E000000, $5C000000);
-  OnThumbFill:    array[TInteractionState] of ARGB = ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF);
+  OffTrackFill:   array[TFluentInteractionState] of ARGB = ($06000000, $0F000000, $18000000, $00000000);
+  OffTrackStroke: array[TFluentInteractionState] of ARGB = ($72000000, $72000000, $72000000, $37000000);
+  OffThumbFill:   array[TFluentInteractionState] of ARGB = ($9E000000, $9E000000, $9E000000, $5C000000);
+  OnThumbFill:    array[TFluentInteractionState] of ARGB = ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF);
   // Windows 11 default accent shade, used when the system palette is unreadable
   DefaultAccentDark1 = $FF0067C0;
 
@@ -269,7 +269,7 @@ var
   // On-state track fill: the accent shade at the opacity of each state. Hover
   // and Pressed are the same color at 0.9 and 0.8, so the track lightens toward
   // the background instead of darkening.
-  OnTrackFill: array[TInteractionState] of ARGB;
+  OnTrackFill: array[TFluentInteractionState] of ARGB;
 
 // Cubic Bezier from (0,0) to (1,1) with the two control points on one axis
 function BezierAxis(T, C1, C2: Single): Single; inline;
@@ -312,7 +312,7 @@ begin
     Round(GetBlue(A) + (GetBlue(B) - GetBlue(A)) * T));
 end;
 
-function LerpVisual(const A, B: TVisualState; T: Single): TVisualState;
+function LerpVisual(const A, B: TFluentVisualState; T: Single): TFluentVisualState;
 begin
   Result.ThumbW := A.ThumbW + (B.ThumbW - A.ThumbW) * T;
   Result.ThumbH := A.ThumbH + (B.ThumbH - A.ThumbH) * T;
@@ -561,7 +561,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTextPosition(Value: TTextPosition);
+procedure TFluentToggleSwitch.SetTextPosition(Value: TFluentTextPosition);
 begin
   if FTextPosition <> Value then
   begin
@@ -599,7 +599,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetHeaderPosition(Value: THeaderPosition);
+procedure TFluentToggleSwitch.SetHeaderPosition(Value: TFluentHeaderPosition);
 begin
   if FHeaderPosition <> Value then
   begin
@@ -1325,7 +1325,7 @@ begin
   UpdateVisualState;
 end;
 
-function TFluentToggleSwitch.GetInteractionState: TInteractionState;
+function TFluentToggleSwitch.GetInteractionState: TFluentInteractionState;
 begin
   if not Enabled then
     Result := isDisabled
@@ -1337,7 +1337,7 @@ begin
     Result := isNormal;
 end;
 
-function TFluentToggleSwitch.StateVisual(S: TInteractionState): TVisualState;
+function TFluentToggleSwitch.StateVisual(S: TFluentInteractionState): TFluentVisualState;
 var
   K: Single;
 begin
@@ -1353,9 +1353,9 @@ begin
   Result.ThumbOn := OnThumbFill[S];
 end;
 
-function TFluentToggleSwitch.CurrentVisual: TVisualState;
+function TFluentToggleSwitch.CurrentVisual: TFluentVisualState;
 var
-  Target: TVisualState;
+  Target: TFluentVisualState;
 begin
   Target := StateVisual(FState);
   if FStateT < 1.0 then
@@ -1366,7 +1366,7 @@ end;
 
 procedure TFluentToggleSwitch.UpdateVisualState;
 var
-  NewState: TInteractionState;
+  NewState: TFluentInteractionState;
 begin
   NewState := GetInteractionState;
   if NewState = FState then
@@ -1397,7 +1397,7 @@ var
   Pen: TGPPen;
   TrackX, TrackY, TrackOffsetX: Single;
   TrackW, TrackH, PenW, K: Single;
-  VS: TVisualState;
+  VS: TFluentVisualState;
   OffFill, OffStroke, OnFill: ARGB;
   OffThumb, OnThumb: ARGB;
   OffOpacity, Fade: Single;

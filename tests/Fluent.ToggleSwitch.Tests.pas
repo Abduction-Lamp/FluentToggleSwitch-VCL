@@ -1,4 +1,4 @@
-﻿unit ToggleSwitch.Tests;
+﻿unit Fluent.ToggleSwitch.Tests;
 
 interface
 
@@ -10,7 +10,7 @@ uses
   Vcl.Controls,
   Vcl.Forms,
   Vcl.Graphics,
-  ToggleSwitch;
+  Fluent.ToggleSwitch;
 
 type
   [TestFixture]
@@ -1468,11 +1468,11 @@ begin
     Assert.IsTrue(Loaded.ShowText, 'ShowText');
     Assert.AreEqual('Yes', Loaded.TextOn, 'TextOn');
     Assert.AreEqual('No', Loaded.TextOff, 'TextOff');
-    Assert.AreEqual<TTextPosition>(tpLeft, Loaded.TextPosition, 'TextPosition');
+    Assert.AreEqual<TFluentTextPosition>(tpLeft, Loaded.TextPosition, 'TextPosition');
     Assert.AreEqual(5, Loaded.TextSpacing, 'TextSpacing');
     Assert.IsTrue(Loaded.ShowHeader, 'ShowHeader');
     Assert.AreEqual('Header', Loaded.HeaderText, 'HeaderText');
-    Assert.AreEqual<THeaderPosition>(hpBottom, Loaded.HeaderPosition, 'HeaderPosition');
+    Assert.AreEqual<TFluentHeaderPosition>(hpBottom, Loaded.HeaderPosition, 'HeaderPosition');
     Assert.AreEqual<TAlignment>(taRightJustify, Loaded.HeaderAlignment, 'HeaderAlignment');
     Assert.AreEqual(3, Loaded.HeaderSpacing, 'HeaderSpacing');
     Assert.IsTrue(fsBold in Loaded.HeaderFont.Style, 'HeaderFont.Style');

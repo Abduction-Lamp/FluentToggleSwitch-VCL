@@ -16,9 +16,9 @@ uses
   DUnitX.Loggers.Xml.NUnit,
 {$ENDIF }
   DUnitX.TestFramework,
-  ToggleSwitch in '..\source\ToggleSwitch.pas',
-  ToggleSwitch.Tests.LeakMonitor in 'ToggleSwitch.Tests.LeakMonitor.pas',
-  ToggleSwitch.Tests in 'ToggleSwitch.Tests.pas';
+  Fluent.ToggleSwitch in '..\source\Fluent.ToggleSwitch.pas',
+  Fluent.ToggleSwitch.Tests.LeakMonitor in 'Fluent.ToggleSwitch.Tests.LeakMonitor.pas',
+  Fluent.ToggleSwitch.Tests in 'Fluent.ToggleSwitch.Tests.pas';
 
 {$IFNDEF TESTINSIGHT}
 var

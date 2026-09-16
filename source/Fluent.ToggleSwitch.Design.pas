@@ -1,4 +1,4 @@
-﻿unit ToggleSwitch.Design;
+﻿unit Fluent.ToggleSwitch.Design;
 
 interface
 
@@ -10,7 +10,7 @@ uses
   DesignIntf,
   DesignEditors,
   VCLEditors,
-  ToggleSwitch;
+  Fluent.ToggleSwitch;
 
 type
   // Publishes the baseline of the text label to the form designer, so the label
@@ -26,6 +26,10 @@ type
 procedure Register;
 
 implementation
+
+// The palette icon. The resource file carries no dots in its name because
+// brcc32 cuts an output name at the first one
+{$R ..\resources\FluentToggleSwitchIcons.dcr}
 
 { TFluentToggleSwitchGuidelines }
 
@@ -54,7 +58,7 @@ end;
 
 procedure Register;
 begin
-  RegisterComponents('ToggleSwitch', [TFluentToggleSwitch]);
+  RegisterComponents('Fluent', [TFluentToggleSwitch]);
   RegisterComponentGuidelines(TFluentToggleSwitch, TFluentToggleSwitchGuidelines);
 end;
 

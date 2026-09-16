@@ -1,4 +1,4 @@
-﻿unit ToggleSwitch.Tests.LeakMonitor;
+﻿unit Fluent.ToggleSwitch.Tests.LeakMonitor;
 
 ///
 ///  Per-test memory leak monitor for DUnitX that reads the RTL memory manager
@@ -159,7 +159,7 @@ initialization
       ///  A replacement memory manager would leave the RTL snapshots empty and
       ///  every delta at zero, which would pass for a clean run
       if IsMemoryManagerSet then
-        raise Exception.Create('ToggleSwitch.Tests.LeakMonitor reads the RTL '
+        raise Exception.Create('Fluent.ToggleSwitch.Tests.LeakMonitor reads the RTL '
           + 'memory manager; a replacement one needs a monitor of its own');
       Result := TRtlMemoryLeakMonitor.Create;
     end);
