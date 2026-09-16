@@ -1,4 +1,4 @@
-package ToggleSwitch;
+﻿package FluentToggleSwitchR;
 
 {$R *.res}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
@@ -9,31 +9,30 @@ package ToggleSwitch;
 {$EXTENDEDSYNTAX ON}
 {$IMPORTEDDATA ON}
 {$IOCHECKS ON}
-{$LOCALSYMBOLS ON}
+{$LOCALSYMBOLS OFF}
 {$LONGSTRINGS ON}
 {$OPENSTRINGS ON}
-{$OPTIMIZATION OFF}
-{$OVERFLOWCHECKS ON}
-{$RANGECHECKS ON}
-{$REFERENCEINFO ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO OFF}
 {$SAFEDIVIDE OFF}
-{$STACKFRAMES ON}
+{$STACKFRAMES OFF}
 {$TYPEDADDRESS OFF}
 {$VARSTRINGCHECKS ON}
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DEFINE DEBUG}
+{$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'Fluent ToggleSwitch 1.6.0'}
+{$DESCRIPTION 'Fluent ToggleSwitch 2.0.0'}
 {$IMPLICITBUILD ON}
 
 requires
   rtl,
-  vcl,
-  designide;
+  vcl;
 
 contains
-  ToggleSwitch in '..\source\ToggleSwitch.pas';
+  Fluent.ToggleSwitch in '..\source\Fluent.ToggleSwitch.pas';
 
 end.
