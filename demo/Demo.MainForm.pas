@@ -3,9 +3,21 @@
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Fluent.ToggleSwitch, Vcl.ExtCtrls;
+  Winapi.Windows,
+  Winapi.Messages,
+
+  System.SysUtils,
+  System.Variants,
+  System.Classes,
+
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.StdCtrls,
+  Vcl.ExtCtrls,
+
+  Fluent.ToggleSwitch;
 
 type
   TForm1 = class(TForm)
@@ -57,8 +69,6 @@ begin
     Label2.Caption := 'Checked = False (Off)';
 end;
 
-// The two switches below are disabled, so these captions must never change.
-// If one of them flips, the switch answered the pointer when it should not
 procedure TForm1.FluentToggleSwitch3Change(Sender: TObject);
 begin
   if FluentToggleSwitch3.Checked then
@@ -75,7 +85,6 @@ begin
     Label8.Caption := 'Enable = False (Off)';
 end;
 
-// Proof that the keyboard reached the switch, whether or not a ring showed up
 procedure TForm1.FluentToggleSwitch11Change(Sender: TObject);
 begin
   if FluentToggleSwitch11.Checked then

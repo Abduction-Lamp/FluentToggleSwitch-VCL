@@ -5,35 +5,38 @@ interface
 uses
   System.Classes,
   System.Math,
-  System.Types,
-  System.UITypes,
+
   Vcl.ExtCtrls,
   Vcl.Controls,
   Vcl.Graphics,
+
   Winapi.Windows,
   Winapi.Messages,
   Winapi.GDIPAPI,
   Winapi.GDIPOBJ;
 
 type
-  TFluentTextPosition = (tpLeft, tpRight);
-
-  TFluentHeaderPosition = (hpTop, hpBottom);
-
+  TFluentTextPosition     = (tpLeft, tpRight);
+  TFluentHeaderPosition   = (hpTop, hpBottom);
   TFluentInteractionState = (isNormal, isHover, isPressed, isDisabled);
 
-  // Everything an interaction state contributes to the drawing. Kept as values
-  // so a state change can animate from whatever is currently on screen.
   TFluentVisualState = record
-    ThumbW, ThumbH: Single;
-    ThumbOffX, ThumbOnX: Single;
-    TrackOff, StrokeOff, TrackOn: ARGB;
-    ThumbOff, ThumbOn: ARGB;
+    ThumbW   : Single;
+    ThumbH   : Single;
+    ThumbOffX: Single;
+    ThumbOnX : Single;
+
+    TrackOff : ARGB;
+    StrokeOff: ARGB;
+    TrackOn  : ARGB;
+    ThumbOff : ARGB;
+    ThumbOn  : ARGB;
   end;
 
   TFluentToggleSwitch = class(TCustomControl)
   private
     FChecked: Boolean;
+
     FAnimated: Boolean;
     FAnimationDuration: Integer;
     FHovered: Boolean;
@@ -88,6 +91,7 @@ type
     FHeaderFontCustom: Boolean;
     FHeaderWidth: Integer;
     FHeaderHeight: Integer;
+
     procedure SetChecked(Value: Boolean);
     procedure SetAnimationDuration(Value: Integer);
     procedure StartTimer;
@@ -134,15 +138,17 @@ type
     function BlockWidth: Integer;
     function SwitchIndent: Integer;
     function SwitchArea: TRect;
-    procedure CMFontChanged(var Msg: TMessage); message CM_FONTCHANGED;
-    procedure CMMouseEnter(var Msg: TMessage); message CM_MOUSEENTER;
-    procedure CMMouseLeave(var Msg: TMessage); message CM_MOUSELEAVE;
+
+    procedure CMFontChanged(var Msg: TMessage);    message CM_FONTCHANGED;
+    procedure CMMouseEnter(var Msg: TMessage);     message CM_MOUSEENTER;
+    procedure CMMouseLeave(var Msg: TMessage);     message CM_MOUSELEAVE;
     procedure CMEnabledChanged(var Msg: TMessage); message CM_ENABLEDCHANGED;
-    procedure WMSetFocus(var Msg: TWMSetFocus); message WM_SETFOCUS;
-    procedure WMKillFocus(var Msg: TWMKillFocus); message WM_KILLFOCUS;
-    procedure WMUpdateUIState(var Msg: TMessage); message WM_UPDATEUISTATE;
+    procedure WMSetFocus(var Msg: TWMSetFocus);    message WM_SETFOCUS;
+    procedure WMKillFocus(var Msg: TWMKillFocus);  message WM_KILLFOCUS;
+    procedure WMUpdateUIState(var Msg: TMessage);  message WM_UPDATEUISTATE;
     procedure CMSysColorChange(var Msg: TMessage); message CM_SYSCOLORCHANGE;
-    procedure CMWinIniChange(var Msg: TMessage); message CM_WININICHANGE;
+    procedure CMWinIniChange(var Msg: TMessage);   message CM_WININICHANGE;
+
   protected
     procedure Paint; override;
     function CanAutoSize(var NewWidth, NewHeight: Integer): Boolean; override;
@@ -158,12 +164,12 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyUp(var Key: Word; Shift: TShiftState); override;
+
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+
   published
-    // Standard properties, so the switch answers to a designer and to a layout
-    // container the way every other VCL control does
     property Align;
     property AlignWithMargins;
     property Anchors;
@@ -229,47 +235,39 @@ type
 implementation
 
 const
-  // The area the switch occupies: the track and a pixel around it, which is
-  // the room the focus ring needs. WinUI reserves its own room outside the
-  // control, where a windowed control cannot paint
-  TrackAreaWidth  = 42;
-  TrackAreaHeight = 22;
-  TrackWidth  = 40;
-  TrackHeight = 20;
-  DragThreshold = 4;  // pointer travel that turns a press into a drag
-  // Property defaults that a directive cannot spell out
-  DefaultTextOn  = 'On';
-  DefaultTextOff = 'Off';
-  // Animation timings from the WinUI template. The thumb waits out the delay,
-  // then slides for AnimationDuration; interaction states cross-fade faster.
-  ThumbSlideDelay = 33;
-  StateDuration = 83;          // ControlFasterAnimationDuration
-  DisabledStateDuration = 250; // ControlNormalAnimationDuration
-  // Thumb geometry per interaction state. When pressed the thumb becomes a
-  // 17x14 pill hugging the track edge, so its center shifts inward.
-  //                                                      Normal  Hover  Pressed  Disabled
-  ThumbWidths:  array[TFluentInteractionState] of Integer =   (12,     14,    17,      12);
-  ThumbHeights: array[TFluentInteractionState] of Integer =   (12,     14,    14,      12);
-  // Thumb center from the left edge of the track
-  ThumbCenterOffX: array[TFluentInteractionState] of Single = (10,      10,    11.5,    10);
-  ThumbCenterOnX:  array[TFluentInteractionState] of Single = (30,      30,    28.5,    30);
+  TrackAreaWidth        = 42;
+  TrackAreaHeight       = 22;
+  TrackWidth            = 40;
+  TrackHeight           = 20;
+  DragThreshold         = 4;
 
-  // Colors are ARGB ($AARRGGBB) from the WinUI 3 Light theme. Off-state colors
-  // are translucent black blended over the parent background; the On track has
-  // no stroke of its own.
-  //                                                    Normal     Hover      Pressed    Disabled
-  OffTrackFill:   array[TFluentInteractionState] of ARGB = ($06000000, $0F000000, $18000000, $00000000);
+  DefaultTextOn         = 'On';
+  DefaultTextOff        = 'Off';
+
+  ThumbSlideDelay       = 33;
+  StateDuration         = 83;
+  DisabledStateDuration = 250;
+
+  ///  Geometry                                 (Normal, Hover, Pressed, Disabled)
+  ///
+  ThumbWidths    : array[TFluentInteractionState] of Integer = (12, 14, 17,   12);
+  ThumbHeights   : array[TFluentInteractionState] of Integer = (12, 14, 14,   12);
+  ThumbCenterOffX: array[TFluentInteractionState] of Single  = (10, 10, 11.5, 10);
+  ThumbCenterOnX : array[TFluentInteractionState] of Single  = (30, 30, 28.5, 30);
+
+  ///  Colors are ARGB ($AARRGGBB)                         (Normal,    Hover,     Pressed,   Disabled)
+  ///
+  OffTrackFill  : array[TFluentInteractionState] of ARGB = ($06000000, $0F000000, $18000000, $00000000);
   OffTrackStroke: array[TFluentInteractionState] of ARGB = ($72000000, $72000000, $72000000, $37000000);
-  OffThumbFill:   array[TFluentInteractionState] of ARGB = ($9E000000, $9E000000, $9E000000, $5C000000);
-  OnThumbFill:    array[TFluentInteractionState] of ARGB = ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF);
-  // Windows 11 default accent shade, used when the system palette is unreadable
-  DefaultAccentDark1 = $FF0067C0;
+  OffThumbFill  : array[TFluentInteractionState] of ARGB = ($9E000000, $9E000000, $9E000000, $5C000000);
+  OnThumbFill   : array[TFluentInteractionState] of ARGB = ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF);
+
+  DefaultAccentDark1 = $FF0067C0; // Windows 11 default accent shade, used when the system palette is unreadable
+
 
 var
-  // On-state track fill: the accent shade at the opacity of each state. Hover
-  // and Pressed are the same color at 0.9 and 0.8, so the track lightens toward
-  // the background instead of darkening.
-  OnTrackFill: array[TFluentInteractionState] of ARGB;
+  OnTrackFill   : array[TFluentInteractionState] of ARGB;
+
 
 // Cubic Bezier from (0,0) to (1,1) with the two control points on one axis
 function BezierAxis(T, C1, C2: Single): Single; inline;
@@ -309,20 +307,21 @@ begin
     Round(GetAlpha(A) + (GetAlpha(B) - GetAlpha(A)) * T),
     Round(GetRed(A) + (GetRed(B) - GetRed(A)) * T),
     Round(GetGreen(A) + (GetGreen(B) - GetGreen(A)) * T),
-    Round(GetBlue(A) + (GetBlue(B) - GetBlue(A)) * T));
+    Round(GetBlue(A) + (GetBlue(B) - GetBlue(A)) * T)
+  );
 end;
 
 function LerpVisual(const A, B: TFluentVisualState; T: Single): TFluentVisualState;
 begin
-  Result.ThumbW := A.ThumbW + (B.ThumbW - A.ThumbW) * T;
-  Result.ThumbH := A.ThumbH + (B.ThumbH - A.ThumbH) * T;
+  Result.ThumbW    := A.ThumbW + (B.ThumbW - A.ThumbW) * T;
+  Result.ThumbH    := A.ThumbH + (B.ThumbH - A.ThumbH) * T;
   Result.ThumbOffX := A.ThumbOffX + (B.ThumbOffX - A.ThumbOffX) * T;
-  Result.ThumbOnX := A.ThumbOnX + (B.ThumbOnX - A.ThumbOnX) * T;
-  Result.TrackOff := LerpARGB(A.TrackOff, B.TrackOff, T);
+  Result.ThumbOnX  := A.ThumbOnX + (B.ThumbOnX - A.ThumbOnX) * T;
+  Result.TrackOff  := LerpARGB(A.TrackOff, B.TrackOff, T);
   Result.StrokeOff := LerpARGB(A.StrokeOff, B.StrokeOff, T);
-  Result.TrackOn := LerpARGB(A.TrackOn, B.TrackOn, T);
-  Result.ThumbOff := LerpARGB(A.ThumbOff, B.ThumbOff, T);
-  Result.ThumbOn := LerpARGB(A.ThumbOn, B.ThumbOn, T);
+  Result.TrackOn   := LerpARGB(A.TrackOn, B.TrackOn, T);
+  Result.ThumbOff  := LerpARGB(A.ThumbOff, B.ThumbOff, T);
+  Result.ThumbOn   := LerpARGB(A.ThumbOn, B.ThumbOn, T);
 end;
 
 function ScaleAlpha(C: ARGB; Opacity: Single): ARGB;
@@ -330,8 +329,6 @@ begin
   Result := MakeColor(Round(GetAlpha(C) * Opacity), GetRed(C), GetGreen(C), GetBlue(C));
 end;
 
-// SystemAccentColorDark1, the shade WinUI paints the On track with in the light
-// theme. Windows stores the shades as eight RGBA entries; Dark1 is the fifth.
 function SystemAccentDark1: ARGB;
 const
   AccentKey = 'Software\Microsoft\Windows\CurrentVersion\Explorer\Accent';
@@ -340,14 +337,16 @@ var
   Key: HKEY;
   Palette: array[0..31] of Byte;
   Size, ValueType: DWORD;
+  RegResult : Integer;
 begin
   Result := DefaultAccentDark1;
   if RegOpenKeyEx(HKEY_CURRENT_USER, AccentKey, 0, KEY_READ, Key) <> ERROR_SUCCESS then
     Exit;
+
   try
     Size := SizeOf(Palette);
-    if (RegQueryValueEx(Key, 'AccentPalette', nil, @ValueType, @Palette[0], @Size) = ERROR_SUCCESS)
-      and (ValueType = REG_BINARY) and (Size >= Dark1 + 3) then
+    RegResult := RegQueryValueEx(Key, 'AccentPalette', nil, @ValueType, @Palette[0], @Size);
+    if (RegResult = ERROR_SUCCESS) and (ValueType = REG_BINARY) and (Size >= Dark1 + 3) then
       Result := MakeColor(255, Palette[Dark1], Palette[Dark1 + 1], Palette[Dark1 + 2]);
   finally
     RegCloseKey(Key);
@@ -365,9 +364,6 @@ begin
   OnTrackFill[isDisabled] := $37000000;
 end;
 
-// Reads the accent palette again and says whether anything moved, so a
-// setting change that has nothing to do with colour costs no repaint
-// Windows lets people turn interface animation off, and WinUI honours it
 function SystemAnimationsOn: Boolean;
 var
   Allowed: BOOL;
@@ -407,6 +403,7 @@ begin
   Path.AddArc(X + W - R * 2, Y, R * 2, H, 270, 180);
   Path.CloseFigure;
 end;
+
 
 { TFluentToggleSwitch }
 
@@ -535,15 +532,11 @@ begin
   end;
 end;
 
-// Windows hides focus rings until someone reaches for the keyboard, and says
-// so through the UI state of the window. Following it is what keeps a click
-// from leaving a ring behind while Tab still shows where you are.
 procedure TFluentToggleSwitch.UpdateFocusVisibility;
 var
   Visible: Boolean;
 begin
-  Visible := HandleAllocated and
-    (Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEFOCUS = 0);
+  Visible := HandleAllocated and (Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEFOCUS = 0);
   if Visible <> FFocusVisible then
   begin
     FFocusVisible := Visible;
@@ -632,6 +625,7 @@ procedure TFluentToggleSwitch.SetHeaderSpacing(Value: Integer);
 begin
   if Value < 0 then
     Value := 0;
+
   if FHeaderSpacing <> Value then
   begin
     FHeaderSpacing := Value;
@@ -639,33 +633,26 @@ begin
   end;
 end;
 
-// Scale of the monitor the control sits on. CurrentPPI is what VCL keeps in
-// step with the monitor; ScaleFactor is not the same number, since it also
-// carries the design PPI of the form. CurrentPPI stays zero until the control
-// is scaled for the first time, and the design metrics are in 96 dpi units.
 function TFluentToggleSwitch.CurrentScale: Single;
 var
   PPI: Integer;
   Above: TWinControl;
 begin
-  // A control built in code carries no scale of its own until VCL hands it
-  // one, and then it would draw at 100% on a screen that is not. Whoever it
-  // sits on knows better, and the form above them all always knows
   PPI := CurrentPPI;
   Above := Parent;
+
   while (PPI <= 0) and (Above <> nil) do
   begin
     PPI := Above.CurrentPPI;
     Above := Above.Parent;
   end;
+
   if PPI <= 0 then
     PPI := USER_DEFAULT_SCREEN_DPI;
+
   Result := PPI / USER_DEFAULT_SCREEN_DPI * FUserScale;
 end;
 
-// Distance from the edge of the track area to the text. TextSpacing is measured
-// from the track outline, and the area is wider than the track by the room the
-// stroke needs on each side.
 function TFluentToggleSwitch.TextGap: Integer;
 begin
   Result := Round((FTextSpacing - (TrackAreaWidth - TrackWidth) / 2) * CurrentScale);
@@ -673,22 +660,16 @@ begin
     Result := 0;
 end;
 
-// Distance between the header and the row holding the switch
 function TFluentToggleSwitch.HeaderGap: Integer;
 begin
   Result := Round(FHeaderSpacing * CurrentScale);
 end;
 
-// Height the header claims. Measured from the visible top of the glyphs
-// rather than the top of the text box, so the gap reads the same whether the
-// header sits above the switch or below it.
 function TFluentToggleSwitch.HeaderBand: Integer;
 begin
   Result := FHeaderHeight + HeaderGap;
 end;
 
-// Measures the wider of the two labels. Both the auto size and the painting
-// read the result, so measuring is kept apart from anything that resizes.
 procedure TFluentToggleSwitch.Measure;
 var
   DC: HDC;
@@ -700,11 +681,14 @@ begin
   FTextHeight := 0;
   FHeaderWidth := 0;
   FHeaderHeight := 0;
+
   if not (FShowText or FShowHeader) then
     Exit;
+
   DC := GetDC(0);
   try
     SaveFont := SelectObject(DC, Font.Handle);
+
     if FShowText then
     begin
       GetTextMetrics(DC, TM);
@@ -713,6 +697,7 @@ begin
       FTextWidth := Max(SizeOn.cx, SizeOff.cx);
       FTextHeight := TM.tmHeight;
     end;
+
     if FShowHeader then
     begin
       SelectObject(DC, FHeaderFont.Handle);
@@ -721,24 +706,25 @@ begin
       FHeaderWidth := SizeHeader.cx;
       FHeaderHeight := TM.tmHeight;
     end;
+
     SelectObject(DC, SaveFont);
   finally
     ReleaseDC(0, DC);
   end;
 end;
 
-// Free of side effects, so VCL may call it as often as it likes: every resize
-// runs it again from WMWindowPosChanging
 function TFluentToggleSwitch.CanAutoSize(var NewWidth, NewHeight: Integer): Boolean;
 begin
   Result := True;
   NewWidth := Round(TrackAreaWidth * CurrentScale);
   NewHeight := Round(TrackAreaHeight * CurrentScale);
+
   if FShowText then
   begin
     Inc(NewWidth, TextGap + FTextWidth);
     NewHeight := Max(NewHeight, FTextHeight);
   end;
+
   if FShowHeader then
   begin
     NewWidth := Max(NewWidth, FHeaderWidth);
@@ -746,28 +732,22 @@ begin
   end;
 end;
 
-// With a window, the inherited call resizes it and VCL runs CanAutoSize from
-// WMWindowPosChanging. Without one it does nothing at all, which would leave
-// the control at a stale size until it is first shown.
 procedure TFluentToggleSwitch.AdjustSize;
 var
   W, H: Integer;
 begin
   if HandleAllocated then
     inherited
-  else if AutoSize and not (csLoading in ComponentState) then
-  begin
-    W := Width;
-    H := Height;
-    if CanAutoSize(W, H) then
-      SetBounds(Left, Top, W, H);
-  end;
+  else
+    if AutoSize and not (csLoading in ComponentState) then
+    begin
+      W := Width;
+      H := Height;
+      if CanAutoSize(W, H) then
+        SetBounds(Left, Top, W, H);
+    end;
 end;
 
-// Measures again and hands the size to VCL, so that whoever lays the control
-// out - a grid panel, an aligned parent - hears about the change
-// How much room the header takes above the switch, which is nothing unless it
-// is shown and sits on top
 function TFluentToggleSwitch.TopBand: Integer;
 begin
   if FShowHeader and (FHeaderPosition = hpTop) then
@@ -776,8 +756,6 @@ begin
     Result := 0;
 end;
 
-// Width of the switch and its label, which is what the header is measured
-// against
 function TFluentToggleSwitch.BlockWidth: Integer;
 begin
   Result := Round(TrackAreaWidth * CurrentScale);
@@ -785,8 +763,6 @@ begin
     Inc(Result, TextGap + FTextWidth);
 end;
 
-// How far the switch sits from the left edge. Room the header adds beside it
-// goes to whichever side the header is aligned away from
 function TFluentToggleSwitch.SwitchIndent: Integer;
 var
   Extra: Integer;
@@ -794,21 +770,19 @@ begin
   Result := 0;
   if not FShowHeader then
     Exit;
+
   Extra := Width - BlockWidth;
   if Extra <= 0 then
     Exit;
+
   case FHeaderAlignment of
-    taLeftJustify: Result := 0;
+    taLeftJustify : Result := 0;
     taRightJustify: Result := Extra;
   else
     Result := Extra div 2;
   end;
 end;
 
-// The part of the control the pointer answers for: the switch and its caption,
-// but not the header, which describes the control the way a label describes an
-// edit box. WinUI draws the same line: its hit-testable SwitchAreaGrid spans
-// the switch and the captions and stops below the header
 function TFluentToggleSwitch.SwitchArea: TRect;
 var
   Band: Integer;
@@ -816,7 +790,6 @@ begin
   Result := ClientRect;
   if FShowHeader then
   begin
-    // Never let the header eat more than the control has
     Band := Min(HeaderBand, Height);
     if FHeaderPosition = hpTop then
       Result.Top := Band
@@ -827,40 +800,38 @@ begin
   Result.Right := Result.Left + BlockWidth;
 end;
 
-// Measures again and hands the size to VCL. MoveWithTheHeader says the change
-// came from the user asking for a header, a caption or a different alignment:
-// then the room it takes comes out of the form and the switch keeps its place.
-// Scaling, a new window or a font change go through here too, and those must
-// only take note of where the switch ended up.
 procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
 var
   Band, Indent: Integer;
 begin
   Measure;
   AdjustSize;
+
   Band := TopBand;
   Indent := SwitchIndent;
-  if MoveWithTheHeader and AutoSize and (Align = alNone) and
-    not (csLoading in ComponentState) then
+
+  if MoveWithTheHeader and AutoSize and (Align = alNone) and not (csLoading in ComponentState) then
   begin
     if Band <> FTopBand then
       Top := Top - (Band - FTopBand);
+
     if Indent <> FLeftIndent then
       Left := Left - (Indent - FLeftIndent);
   end;
+
   FTopBand := Band;
   FLeftIndent := Indent;
   Invalidate;
 end;
 
-// A switch that has never been given a header carries its own name, the way a
-// label does, so turning the header on shows something straight away
 procedure TFluentToggleSwitch.SetName(const Value: TComponentName);
 var
   Seed: Boolean;
 begin
   Seed := not (csLoading in ComponentState) and (FHeaderText = Name);
+
   inherited SetName(Value);
+
   if Seed then
     HeaderText := Value;
 end;
@@ -868,8 +839,6 @@ end;
 procedure TFluentToggleSwitch.CMFontChanged(var Msg: TMessage);
 begin
   inherited;
-  // The header follows the control font until it is given one of its own,
-  // which also carries it through a scale change
   if not FHeaderFontCustom then
   begin
     FHeaderFont.OnChange := nil;
@@ -884,35 +853,23 @@ end;
 
 procedure TFluentToggleSwitch.ChangeScale(M, D: Integer; isDpiChange: Boolean);
 begin
-  // Inherited updates the scale VCL keeps and the font; the layout is measured
-  // afterwards, against both
   inherited;
-  // ScaleBy asks for a scale that has nothing to do with the screen, and VCL
-  // records it nowhere. Without keeping it, the font would grow and the track
-  // would stay the size it was. Loading a form scales its children the same
-  // way, and there the size in the DFM already accounts for it
   if not isDpiChange and not (csLoading in ComponentState) then
     FUserScale := FUserScale * M / D;
-  // VCL scales the control font, and a header font of its own has to follow
+
   if FHeaderFontCustom then
     FHeaderFont.Height := MulDiv(FHeaderFont.Height, M, D);
-  // A state snapshot taken at the old scale would be wrong now
+
   FStateT := 1.0;
-  // VCL has already scaled the position, and the bands scaled with it
   LayoutChanged;
 end;
 
-// AdjustSize sits out csLoading, so the size measured before the last
-// property was read stands until now; measure once, as the AutoSize controls
-// of the VCL do in Loaded
 procedure TFluentToggleSwitch.Loaded;
 begin
   inherited;
-  // The position in the DFM already accounts for the header
   LayoutChanged;
 end;
 
-// The control only learns which monitor it sits on once the window exists
 procedure TFluentToggleSwitch.CreateWnd;
 begin
   inherited;
@@ -921,8 +878,6 @@ end;
 
 destructor TFluentToggleSwitch.Destroy;
 begin
-  // Whoever is waiting on the stack for an event handler to return needs to
-  // know the switch did not survive it
   if FGone <> nil then
     FGone^ := True;
   FAnimTimer.Free;
@@ -934,32 +889,27 @@ procedure TFluentToggleSwitch.SetChecked(Value: Boolean);
 begin
   if FChecked = Value then
     Exit;
+
   FChecked := Value;
   SettleThumb;
   Invalidate;
-  // Reading a DFM is not a change anyone asked for
+
   if not (csLoading in ComponentState) then
     Change;
 end;
 
-// TControl reports a click from WMLButtonUp, before MouseUp has toggled
-// anything, so that one is dropped. Only the one the switch makes for itself
-// gets through. csClickEvents stays on, because OnDblClick rides on it too
 procedure TFluentToggleSwitch.Click;
 begin
   if FReportingClick then
     inherited;
 end;
 
-// OnChange is about the value and does not care who moved it, which is what
-// Toggled means in WinUI and what OnClick means on a TCheckBox
 procedure TFluentToggleSwitch.Change;
 begin
   if Assigned(FOnChange) then
     FOnChange(Self);
 end;
 
-// The timer, and the hidden window it owns, exist only once something animates
 procedure TFluentToggleSwitch.StartTimer;
 begin
   if FAnimTimer = nil then
@@ -980,10 +930,6 @@ begin
   StartTimer;
 end;
 
-// Moves the thumb from wherever it is to the rest position of the current state
-// The colour and the thumb are two animations, not one: the track reaches its
-// new colour in 83 ms while the thumb is still on its way, which is what makes
-// a WinUI switch look like it snaps
 procedure TFluentToggleSwitch.StartFade;
 begin
   FFadeFrom := FFadeValue;
@@ -998,9 +944,7 @@ begin
   begin
     StartFade;
     StartAnimation;
-  end
-  else
-  begin
+  end else begin
     FSliding := False;
     FAnimProgress := Ord(FChecked);
     FAnimTarget := FAnimProgress;
@@ -1020,15 +964,12 @@ begin
 
   if FSliding then
   begin
-    T := ((Counter - FAnimStartTime) / FAnimFrequency * 1000 - ThumbSlideDelay)
-      / FAnimationDuration;
+    T := ((Counter - FAnimStartTime) / FAnimFrequency * 1000 - ThumbSlideDelay) / FAnimationDuration;
     if T >= 1.0 then
     begin
       T := 1.0;
       FSliding := False;
-    end
-    else
-    begin
+    end else begin
       Busy := True;
       if T < 0 then
         T := 0;
@@ -1039,7 +980,6 @@ begin
 
   if FFadeT < 1.0 then
   begin
-    // Linear, and without the delay the thumb waits out
     T := (Counter - FFadeStart) / FAnimFrequency * 1000 / StateDuration;
     if T >= 1.0 then
       FFadeT := 1.0
@@ -1056,10 +996,8 @@ begin
     T := (Counter - FStateStartTime) / FAnimFrequency * 1000 / FStateDuration;
     if T >= 1.0 then
       FStateT := 1.0
-    else
-    begin
+    else begin
       Busy := True;
-      // ControlFastOutSlowInKeySpline
       FStateT := BezierEase(T, 0, 0, 0, 1);
     end;
   end;
@@ -1075,30 +1013,29 @@ begin
   FAnimationDuration := Value;
 end;
 
-// The user acted: the state moves first and the click is reported after it,
-// so an OnClick handler reads the value the user just asked for
 procedure TFluentToggleSwitch.Toggle;
 var
   Gone: Boolean;
   Outer: PBoolean;
 begin
-  // Either event may free the switch, so a local on this stack frame keeps
-  // watch, and whoever called us hears about it through their own
   Gone := False;
   Outer := FGone;
   FGone := @Gone;
   Checked := not FChecked;
+
   if not Gone then
   begin
     FReportingClick := True;
     Click;
   end;
+
   if Gone then
   begin
     if Outer <> nil then
       Outer^ := True;
     Exit;
   end;
+
   FReportingClick := False;
   FGone := Outer;
 end;
@@ -1107,21 +1044,18 @@ end;
 procedure TFluentToggleSwitch.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   inherited;
-  // Windows keeps the pointer out of a disabled window, but a message sent by
-  // hand arrives all the same
   if (Button = mbLeft) and Enabled and PtInRect(SwitchArea, Point(X, Y)) then
   begin
-    // A thumb still on its way belongs to whoever grabbed it
     FSliding := False;
-    // Clicking a control is how Windows hands it the focus. The API says no by
-    // returning zero where TWinControl.SetFocus would raise, and a switch kept
-    // out of the tab order is kept out of the way of the keyboard altogether
+
     if TabStop and not (csDesigning in ComponentState) then
       Winapi.Windows.SetFocus(Handle);
+
     FPressed := True;
     FDragStartX := X;
     FDragDelta := 0;
     FDragged := False;
+
     UpdateVisualState;
   end;
 end;
@@ -1132,38 +1066,34 @@ var
 begin
   if (Button = mbLeft) and FPressed then
   begin
-    // An OnChange or OnClick handler is allowed to free the switch, and this
-    // local outlives it
     Gone := False;
     FGone := @Gone;
     try
-    FPressed := False;
-    UpdateVisualState;
-    if FDragged then
-    begin
-      // The thumb settles into the state on its side of the track
-      FAnimProgress := FAnimProgress + FDragDelta / DragTravel;
-      FDragDelta := 0;
-      if (FAnimProgress >= 0.5) <> FChecked then
-        Toggle
-      else
-        SettleThumb;
-    end
-    else
-    begin
-      // A click can nudge the thumb without reaching the drag threshold
-      FDragDelta := 0;
-      if PtInRect(SwitchArea, Point(X, Y)) then
-        Toggle
-      else
-        SettleThumb;
-    end;
+      FPressed := False;
+      UpdateVisualState;
+      if FDragged then
+      begin
+        FAnimProgress := FAnimProgress + FDragDelta / DragTravel;
+        FDragDelta := 0;
+        if (FAnimProgress >= 0.5) <> FChecked then
+          Toggle
+        else
+          SettleThumb;
+      end else begin
+        FDragDelta := 0;
+        if PtInRect(SwitchArea, Point(X, Y)) then
+          Toggle
+        else
+          SettleThumb;
+      end;
     finally
       if not Gone then
         FGone := nil;
     end;
+
     if Gone then
       Exit;
+
     Invalidate;
   end;
   inherited;
@@ -1174,21 +1104,23 @@ var
   IsOver: Boolean;
 begin
   inherited;
+
   IsOver := PtInRect(SwitchArea, Point(X, Y));
+
   if IsOver <> FHovered then
   begin
     FHovered := IsOver;
     UpdateVisualState;
   end;
+
   if FPressed then
     DragThumb(X);
 end;
 
-// WinUI acts when the key comes back up, so holding Space down does not fire
-// over and over, and a key released elsewhere never reaches us
 procedure TFluentToggleSwitch.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited;
+
   if FKeyboardToggle and Enabled and (Key = VK_SPACE) and (Shift = []) then
   begin
     Key := 0;
@@ -1203,6 +1135,7 @@ end;
 procedure TFluentToggleSwitch.KeyUp(var Key: Word; Shift: TShiftState);
 begin
   inherited;
+
   if FKeyPressed and (Key = VK_SPACE) then
   begin
     Key := 0;
@@ -1222,18 +1155,20 @@ var
   Delta: Single;
 begin
   Delta := X - FDragStartX;
+
   if Abs(Delta) >= DragThreshold * CurrentScale then
     FDragged := True;
-  // The thumb stays within the track, counted from wherever it was when it
-  // was grabbed rather than from the place it would have come to rest
+
   if Delta < -FAnimProgress * DragTravel then
     Delta := -FAnimProgress * DragTravel
-  else if Delta > (1 - FAnimProgress) * DragTravel then
-    Delta := (1 - FAnimProgress) * DragTravel;
+
+  else
+    if Delta > (1 - FAnimProgress) * DragTravel then
+      Delta := (1 - FAnimProgress) * DragTravel;
+
   if Delta <> FDragDelta then
   begin
     FDragDelta := Delta;
-    // A thumb under the pointer carries the colour with it
     FFadeValue := FAnimProgress + Delta / DragTravel;
     FFadeT := 1.0;
     Invalidate;
@@ -1247,15 +1182,11 @@ begin
   UpdateVisualState;
 end;
 
-// Drops a press without acting on it. The thumb carries FDragDelta into its
-// painted position, so letting the press go is not enough: the offset has to
-// go with it, or the thumb stays where the drag left it
 procedure TFluentToggleSwitch.CancelPress;
 begin
   FPressed := False;
   FDragged := False;
   FDragDelta := 0;
-  // The colour followed the thumb out, and it has to come back with it
   FFadeValue := Ord(FChecked);
   FFadeT := 1.0;
 end;
@@ -1264,7 +1195,6 @@ procedure TFluentToggleSwitch.CMMouseLeave(var Msg: TMessage);
 begin
   inherited;
   FHovered := False;
-  // The mouse is captured while pressed, so a drag may leave the control
   if not MouseCapture then
     CancelPress;
   UpdateVisualState;
@@ -1280,7 +1210,6 @@ end;
 procedure TFluentToggleSwitch.WMKillFocus(var Msg: TWMKillFocus);
 begin
   inherited;
-  // A key still down when focus moves on will never come back up here
   if FKeyPressed then
   begin
     FKeyPressed := False;
@@ -1295,9 +1224,6 @@ begin
   UpdateFocusVisibility;
 end;
 
-// Windows announces a new accent colour to top-level windows, and VCL passes
-// it down to every control. The palette is read again here so a switch that is
-// already on screen changes with it
 procedure TFluentToggleSwitch.CMSysColorChange(var Msg: TMessage);
 begin
   inherited;
@@ -1317,7 +1243,6 @@ begin
   inherited;
   if not Enabled then
   begin
-    // A disabled window loses the capture, so no MouseUp will arrive
     CancelPress;
     FKeyPressed := False;
     FHovered := False;
@@ -1329,12 +1254,14 @@ function TFluentToggleSwitch.GetInteractionState: TFluentInteractionState;
 begin
   if not Enabled then
     Result := isDisabled
-  else if FPressed or FKeyPressed then
-    Result := isPressed
-  else if FHovered then
-    Result := isHover
   else
-    Result := isNormal;
+    if FPressed or FKeyPressed then
+      Result := isPressed
+    else
+      if FHovered then
+        Result := isHover
+      else
+        Result := isNormal;
 end;
 
 function TFluentToggleSwitch.StateVisual(S: TFluentInteractionState): TFluentVisualState;
@@ -1342,15 +1269,15 @@ var
   K: Single;
 begin
   K := CurrentScale;
-  Result.ThumbW := ThumbWidths[S] * K;
-  Result.ThumbH := ThumbHeights[S] * K;
+  Result.ThumbW    := ThumbWidths[S] * K;
+  Result.ThumbH    := ThumbHeights[S] * K;
   Result.ThumbOffX := ThumbCenterOffX[S] * K;
-  Result.ThumbOnX := ThumbCenterOnX[S] * K;
-  Result.TrackOff := OffTrackFill[S];
+  Result.ThumbOnX  := ThumbCenterOnX[S] * K;
+  Result.TrackOff  := OffTrackFill[S];
   Result.StrokeOff := OffTrackStroke[S];
-  Result.TrackOn := OnTrackFill[S];
-  Result.ThumbOff := OffThumbFill[S];
-  Result.ThumbOn := OnThumbFill[S];
+  Result.TrackOn   := OnTrackFill[S];
+  Result.ThumbOff  := OffThumbFill[S];
+  Result.ThumbOn   := OnThumbFill[S];
 end;
 
 function TFluentToggleSwitch.CurrentVisual: TFluentVisualState;
@@ -1358,6 +1285,7 @@ var
   Target: TFluentVisualState;
 begin
   Target := StateVisual(FState);
+
   if FStateT < 1.0 then
     Result := LerpVisual(FStateFrom, Target, FStateT)
   else
@@ -1371,21 +1299,22 @@ begin
   NewState := GetInteractionState;
   if NewState = FState then
     Exit;
-  // Animate away from whatever is on screen right now
+
   FStateFrom := CurrentVisual;
   FState := NewState;
   if NewState = isDisabled then
     FStateDuration := DisabledStateDuration
   else
     FStateDuration := StateDuration;
+
   if FAnimated and SystemAnimationsOn and HandleAllocated and Showing then
   begin
     FStateT := 0;
     QueryPerformanceCounter(FStateStartTime);
     StartTimer;
-  end
-  else
+  end else
     FStateT := 1.0;
+
   Invalidate;
 end;
 
@@ -1426,7 +1355,6 @@ var
   end;
 
 begin
-  // Where the switch sits and how much room it has, header excluded
   Area := SwitchArea;
   Indent := Area.Left;
   RowTop := Area.Top;
@@ -1441,40 +1369,35 @@ begin
   HeaderX := 0;
   HeaderY := 0;
 
-  // Background. csOpaque suppresses WM_ERASEBKGND, so this is the only erase
   Canvas.Brush.Style := bsSolid;
   Canvas.Brush.Color := Color;
   Canvas.FillRect(ClientRect);
 
-  // The header takes the band the switch area leaves it
   if FShowHeader then
   begin
     if FHeaderPosition = hpTop then
-      // The internal leading is where accents live, so the box keeps it
       HeaderY := 0
     else
       HeaderY := Height - FHeaderHeight;
+
     case FHeaderAlignment of
-      taCenter: HeaderX := (Width - FHeaderWidth) div 2;
+      taCenter      : HeaderX := (Width - FHeaderWidth) div 2;
       taRightJustify: HeaderX := Width - FHeaderWidth;
     end;
   end;
 
-  // Text layout; the sizes were measured when the font or the text last changed
   if FShowText then
   begin
     if FTextPosition = tpLeft then
     begin
       TextX := Round(TrackOffsetX);
       TrackOffsetX := TrackOffsetX + FTextWidth + TextGap;
-    end
-    else
+    end else
       TextX := Round(TrackOffsetX) + Round(TrackAreaWidth * K) + TextGap;
 
     TextY := RowTop + (RowHeight - FTextHeight) div 2;
   end;
 
-  // Track position, kept on whole pixels so the outline stays crisp
   TrackX := TrackOffsetX + Round((TrackAreaWidth - TrackWidth) * K / 2);
   TrackY := RowTop + Round((RowHeight - TrackH) / 2);
 
@@ -1482,7 +1405,6 @@ begin
   Fade := FFadeValue;
   OffOpacity := 1 - Fade;
 
-  // Track colors; user colors override the theme
   if FTrackColorOff <> clDefault then
     OffFill := TColorToARGB(FTrackColorOff)
   else
@@ -1498,7 +1420,6 @@ begin
   else
     OnFill := VS.TrackOn;
 
-  // Thumb colors
   if FThumbColorOff <> clDefault then
     OffThumb := TColorToARGB(FThumbColorOff)
   else
@@ -1509,63 +1430,48 @@ begin
   else
     OnThumb := VS.ThumbOn;
 
-  // Thumb geometry; position interpolated
-  ThumbW := VS.ThumbW;
-  ThumbH := VS.ThumbH;
+  ThumbW  := VS.ThumbW;
+  ThumbH  := VS.ThumbH;
   ThumbCY := TrackY + TrackH / 2;
-  ThumbCX := TrackX + VS.ThumbOffX
-    + (VS.ThumbOnX - VS.ThumbOffX) * FAnimProgress
-    + FDragDelta;
+  ThumbCX := TrackX + VS.ThumbOffX + (VS.ThumbOnX - VS.ThumbOffX) * FAnimProgress + FDragDelta;
 
-  // One path, one brush and one pen serve the whole frame, recolored per shape.
-  // GDI+ objects do not outlive Paint: the wrapper unit shuts GDI+ down in its
-  // finalization, which can run before the last control is destroyed.
   G := nil;
   Path := nil;
   Brush := nil;
   Pen := nil;
+
   try
     G := TGPGraphics.Create(Canvas.Handle);
     G.SetSmoothingMode(SmoothingModeAntiAlias);
+
     Path := TGPGraphicsPath.Create;
     Brush := TGPSolidBrush.Create(0);
-    // One logical pixel wide, as in WinUI
     Pen := TGPPen.Create(0, PenW);
 
-    // The outline sits inside the track box, so the stroke ends on its edge
-    // instead of straddling it: the pill measures the full 40x20 of the kit,
-    // where the stroke is drawn outside a 38x18 fill.
-    // Off and On tracks cross-fade, as in WinUI
-    AddPillPath(Path, TrackX + PenW / 2, TrackY + PenW / 2,
-      TrackW - PenW, TrackH - PenW);
+    AddPillPath(Path, TrackX + PenW / 2, TrackY + PenW / 2, TrackW - PenW, TrackH - PenW);
+
     if OffOpacity > 0 then
     begin
       FillShape(ScaleAlpha(OffFill, OffOpacity));
       StrokeShape(ScaleAlpha(OffStroke, OffOpacity));
     end;
+
     if Fade > 0 then
-    begin
       if FTrackFrameColor <> clDefault then
       begin
         FillShape(ScaleAlpha(OnFill, Fade));
         StrokeShape(ScaleAlpha(OffStroke, Fade));
-      end
-      else
-      begin
-        // One colour, so one shape: a stroke over its own fill would lay the
-        // translucent colour on the outer pixel twice and darken the rim
+      end else begin
         Path.Reset;
         AddPillPath(Path, TrackX, TrackY, TrackW, TrackH);
         FillShape(ScaleAlpha(OnFill, Fade));
         Path.Reset;
-        AddPillPath(Path, TrackX + PenW / 2, TrackY + PenW / 2,
-          TrackW - PenW, TrackH - PenW);
+        AddPillPath(Path, TrackX + PenW / 2, TrackY + PenW / 2, TrackW - PenW, TrackH - PenW);
       end;
-    end;
 
-    // Thumb cross-fades the same way
     Path.Reset;
     AddPillPath(Path, ThumbCX - ThumbW / 2, ThumbCY - ThumbH / 2, ThumbW, ThumbH);
+
     if OffOpacity > 0 then
       FillShape(ScaleAlpha(OffThumb, OffOpacity));
     if Fade > 0 then
@@ -1581,6 +1487,7 @@ begin
   if FShowText or FShowHeader then
   begin
     Canvas.Brush.Style := bsClear;
+
     if FShowText then
     begin
       Canvas.Font.Assign(Font);
@@ -1592,6 +1499,7 @@ begin
         LabelText := FTextOff;
       Canvas.TextOut(TextX, TextY, LabelText);
     end;
+
     if FShowHeader then
     begin
       Canvas.Font.Assign(FHeaderFont);
@@ -1601,14 +1509,9 @@ begin
     end;
   end;
 
-  // The ring wraps the switch and its label but leaves the header out, the way
-  // the WinUI focus target covers the switch area only. GDI draws it through
-  // the selected brush, and the labels above leave a hollow one behind
   if FShowFocus and FFocusVisible and Focused then
   begin
     Canvas.Brush.Style := bsSolid;
-    // The pixel the track area leaves around the track is the ring's own, so
-    // the ring goes on the bounds rather than on top of the outline
     Canvas.DrawFocusRect(Area);
   end;
 end;

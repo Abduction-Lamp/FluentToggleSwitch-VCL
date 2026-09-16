@@ -7,7 +7,7 @@
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
-        <ProjectName Condition="'$(ProjectName)'==''">ToggleSwitch</ProjectName>
+        <ProjectName Condition="'$(ProjectName)'==''">FluentToggleSwitchD</ProjectName>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Package</AppType>
     </PropertyGroup>
@@ -57,7 +57,7 @@
         <GenPackage>true</GenPackage>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <DCC_CBuilderOutput>All</DCC_CBuilderOutput>
-        <SanitizedProjectName>ToggleSwitch</SanitizedProjectName>
+        <SanitizedProjectName>FluentToggleSwitchD</SanitizedProjectName>
         <DCC_Description>Fluent ToggleSwitch 2.0.0</DCC_Description>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -104,8 +104,19 @@
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="vcl.dcp"/>
         <DCCReference Include="designide.dcp"/>
-        <DCCReference Include="FluentToggleSwitchR.dproj"/>
+        <DCCReference Include="FluentToggleSwitchR.dcp"/>
         <DCCReference Include="..\source\Fluent.ToggleSwitch.Design.pas"/>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Debug">
+            <Key>Cfg_1</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Release">
+            <Key>Cfg_2</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Delphi.Personality.12</Borland.Personality>
@@ -113,7 +124,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">ToggleSwitch.dpk</Source>
+                    <Source Name="MainSource">FluentToggleSwitchD.dpk</Source>
                 </Source>
             </Delphi.Personality>
             <Deployment Version="4">

@@ -4,18 +4,16 @@ interface
 
 uses
   System.Classes,
-  System.UITypes,
+
   Vcl.Controls,
   Vcl.StdCtrls,
+
   DesignIntf,
-  DesignEditors,
   VCLEditors,
+
   Fluent.ToggleSwitch;
 
 type
-  // Publishes the baseline of the text label to the form designer, so the label
-  // can be lined up with the captions of buttons and edits next to it. Edge and
-  // margin guides come from the ancestor.
   TFluentToggleSwitchGuidelines = class(TWinControlGuidelines)
   protected
     function GetCount: Integer; override;
@@ -27,8 +25,6 @@ procedure Register;
 
 implementation
 
-// The palette icon. The resource file carries no dots in its name because
-// brcc32 cuts an output name at the first one
 {$R ..\resources\FluentToggleSwitchIcons.dcr}
 
 { TFluentToggleSwitchGuidelines }
