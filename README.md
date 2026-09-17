@@ -1,122 +1,76 @@
+<img src="resources/assets/toggle-left-18.png" width="72" alt="">
+
 # TFluentToggleSwitch
 
-A VCL component for Delphi that replicates the look and behavior of the Windows 11 ToggleSwitch (WinUI 3 / Fluent Design).
-
-Works on **any version of Windows** (7, 8, 10, 11) with no dependency on system controls or themes. Fully custom-drawn via GDI+.
-
-## Why
-
-Standard VCL does not include a toggle switch. Existing third-party solutions either look outdated or pull in external dependencies. This component:
-
-- Looks like a native Windows 11 toggle — pill-shape track, round thumb, smooth animation
-- Independent of Windows version and system theme
-- Zero external dependencies — only RTL, VCL, GDI+
-- Installs into the Delphi IDE component palette as a standard component
-
-## Features
-
-- Smooth On/Off transition animation with the timings of the WinUI template: the thumb waits 33 ms, then slides for 367 ms on a cubic Bezier curve while track and thumb colors cross-fade
-- Hover, press and disabled changes cross-fade over 83 ms rather than snapping
-- 8 visual states: Normal / Hover / Pressed / Disabled × On / Off
-- Thumb grows on hover and stretches into a pill when pressed, as in WinUI 3
-- WinUI 3 Light Theme color scheme, using the accent color configured in Windows (falls back to `#0067C0`, the Windows 11 default)
-- Customizable colors — override track fill, track border, and thumb colors for On/Off states
-- Optional text label — configurable text, position (left/right), and spacing with auto-resize
-- Mouse only — click, hover, press and drag the thumb. The switch never takes focus
-- DPI-aware — correct rendering on high-DPI displays (per-monitor V2)
-- Anti-aliased rendering via GDI+
-- DoubleBuffered — flicker-free
+A VCL toggle switch for Delphi that looks and behaves like the one in Windows 11,
+drawn entirely by the component rather than by the system.
 
 ![Demo](docs/images/demo-screenshot-001.png)
 
+## Why
+
+The VCL has no toggle switch of its own that looks current, and the third-party
+ones either show their age or bring dependencies with them. This one:
+
+- follows the WinUI 3 design: a pill-shaped track, a thumb that grows under the
+  pointer and stretches when pressed, and the timings of the WinUI template;
+- takes the accent colour from Windows and follows it while the program runs;
+- looks the same on Windows 7, 8, 10 and 11, because it asks the system for
+  almost nothing and has an answer ready when the answer is missing;
+- brings nothing with it but the RTL, the VCL and GDI+;
+- installs into the palette like any other component.
+
+## What it does
+
+- Mouse, keyboard and touch. Click it, drag the thumb across the track, or
+  press the space bar.
+- An optional caption beside the switch, on either side, naming its two values.
+  Clicking the caption counts as clicking the switch.
+- An optional header above or below it, with a font of its own, describing the
+  switch the way a label describes an edit box. The header is not a target for
+  the pointer.
+- A focus ring that follows the Windows convention: hidden until someone
+  reaches for the keyboard, shown from then on.
+- Colours you can override one by one, or leave to the theme.
+- Correct on a high-DPI display, and correct again after a form moves between
+  monitors of different scale.
+- Anti-aliased, flicker-free, and costing nothing at all while nothing moves.
+
+Full reference: [docs/API.md](docs/API.md).
+
 ## Requirements
 
-- **Delphi 12.1** (RAD Studio 12.1 Athens) or compatible version
-- Platform: **Windows** (Win32, Win64)
+Delphi 12.1 Athens, or a version close enough to compile it. The runtime
+package builds for Win32 and Win64; the design-time package, like every
+design-time package, is Win32.
 
-## Project Structure
+## Installing
 
-```
-VCL-ToggleSwitch/
-├── source/
-│   ├── ToggleSwitch.pas              — component source code (TFluentToggleSwitch)
-│   └── ToggleSwitch.Design.pas       — design-time only: form designer guidelines
-├── packages/
-│   ├── ToggleSwitch.dpk              — design-time package for IDE installation
-│   ├── ToggleSwitch.dproj            — package project file
-│   └── ToggleSwitch.res              — package resources
-├── demo/
-│   ├── Demo.dpr                      — demo application entry point
-│   ├── Demo.dproj                    — demo project file
-│   ├── Demo.MainForm.pas             — demo form (8 toggle variants)
-│   ├── Demo.MainForm.dfm             — demo form layout
-│   └── Demo.res                      — demo resources
-├── tests/
-│   ├── Tests.dpr                     — test runner (DUnitX + FastMM4)
-│   ├── Tests.dproj                   — test project file
-│   ├── Tests.res                     — test runner resources
-│   └── ToggleSwitch.Tests.pas        — DUnitX unit tests
-├── docs/
-│   └── images/                       — screenshots
-├── ToggleSwitch-PG.groupproj         — project group (package + demo + tests)
-├── CHANGELOG.md
-├── LICENSE
-└── README.md
-```
+1. Clone the repository and open `FluentToggleSwitch.groupproj`.
+2. Build **FluentToggleSwitchR**, the runtime package.
+3. Build **FluentToggleSwitchD**, the design-time package, and install it.
 
-## Quick Start
+`TFluentToggleSwitch` appears on the **Fluent** page of the palette.
 
-### 1. Clone the repository
+Changing the component afterwards means building both packages again and
+restarting the IDE: the design-time package has the runtime one as a
+dependency, and a loaded package cannot be swapped underneath the IDE.
 
-```
-git clone https://github.com/Abduction-Lamp/VCL-ToggleSwitch.git
-```
+To use the source without installing anything, put `source` on the search path
+of your project and add `Fluent.ToggleSwitch` to a uses clause.
 
-### 2. Open in Delphi IDE
+## Using it
 
-Open the project group file:
+From the designer, drop it on a form and set what you need in the object
+inspector. The designer is given the baseline of the caption, so the switch
+lines up with the captions of the labels, edits and buttons around it.
 
-```
-ToggleSwitch-PG.groupproj
-```
-
-This will load all three projects: package, demo, and tests.
-
-### 3. Install the component into the IDE palette
-
-1. In Project Manager, find the **ToggleSwitch.bpl** project (packages)
-2. Right-click → **Compile** (this places `.dcu` files into the global Dcp directory, making the unit available to all projects)
-3. Right-click → **Install**
-4. The component `TFluentToggleSwitch` will appear in the **"ToggleSwitch"** tab of the component palette
-
-The installed version is listed in **Component → Install Packages**, next to the package name.
-
-After this, any new project can simply `uses ToggleSwitch;` — no additional Search Path configuration needed.
-
-### 4. Run the demo
-
-1. In Project Manager, select the **Demo** project
-2. Right-click → **Set as Active Project**
-3. **Run** (F9)
-
-The demo includes 8 toggle variants: default, initially on, disabled off, disabled on, no animation, custom colors, text label (right), and text label (left).
-
-## Usage
-
-### Design-time (visual)
-
-After installing the package:
-1. Drag `TFluentToggleSwitch` from the **"ToggleSwitch"** palette tab onto your form
-2. Configure properties in the Object Inspector
-3. Assign an `OnChange` event handler
-
-### Runtime (programmatic)
+From code:
 
 ```pascal
 uses
-  ToggleSwitch;
+  Fluent.ToggleSwitch;
 
-// Creation
 var
   Toggle: TFluentToggleSwitch;
 begin
@@ -124,86 +78,64 @@ begin
   Toggle.Parent := Self;
   Toggle.Left := 20;
   Toggle.Top := 20;
-  Toggle.OnChange := HandleToggleChange;
-end;
-
-// Handling state change
-procedure TForm1.HandleToggleChange(Sender: TObject);
-begin
-  if TFluentToggleSwitch(Sender).Checked then
-    ShowMessage('On')
-  else
-    ShowMessage('Off');
+  Toggle.ShowText := True;
+  Toggle.TextOn := 'Enabled';
+  Toggle.TextOff := 'Disabled';
+  Toggle.OnChange := HandleChange;
 end;
 ```
 
-### Custom colors
+`OnChange` reports the value and does not care who moved it, so it fires for an
+assignment in code as well as for the user. `OnClick` reports the action: it
+fires only when the user toggles the switch, and after the value has already
+moved, so a handler reads what the user just asked for.
+
+```pascal
+procedure TForm1.HandleChange(Sender: TObject);
+begin
+  Lamp.Visible := TFluentToggleSwitch(Sender).Checked;
+end;
+```
+
+### Colours
+
+Every colour property starts at `clDefault`, which leaves it to the theme. The
+theme carries a separate, partly translucent colour for each interaction state
+and takes the on track from the Windows accent, so a single `TColor` cannot
+stand in for it: assigning one paints that colour in every state.
 
 ```pascal
 Toggle.TrackColorOn := clGreen;
-Toggle.TrackColorOff := clSilver;
-Toggle.TrackFrameColor := clGray;
 Toggle.ThumbColorOn := clWhite;
-Toggle.ThumbColorOff := clBlack;
 ```
 
-Set any color property to `clDefault` (default) to use the built-in WinUI 3 color scheme. The scheme carries a separate, partly translucent color for every interaction state, and the On track follows the Windows accent, so a single `TColor` cannot stand in for it: assigning one paints that color in every state.
-
-### Text label
+### A header
 
 ```pascal
-Toggle.ShowText := True;
-Toggle.TextOn := 'Enabled';
-Toggle.TextOff := 'Disabled';
-Toggle.TextPosition := tpRight;  // tpLeft or tpRight
-Toggle.TextSpacing := 12;        // pixels from the track outline to the text
+Toggle.HeaderText := 'Notifications';
+Toggle.ShowHeader := True;
 ```
 
-In the form designer the label publishes its text baseline, so the switch can be lined up with the captions of buttons and edits placed next to it.
+The control grows to make room, and moves itself so that the switch stays
+where you put it.
 
-The component auto-adjusts its width to fit the longer of the two texts. Text is rendered using the component's `Font` property. Clicking anywhere on the component, including the label, toggles the switch.
+## Project structure
 
-## Properties
+```
+source/     the component, and a design-time unit with the palette registration
+packages/   the runtime package and the design-time one
+resources/  the palette icon and the artwork it came from
+demo/       a form showing twelve switches side by side
+tests/      ninety DUnitX tests, with a memory leak monitor of their own
+docs/       the API reference and screenshots
+```
 
-| Property | Type | Default | Description |
-|:--------:|:----:|:-------:|-------------|
-| `Checked` | `Boolean` | `False` | Toggle state (On/Off) |
-| `Animated` | `Boolean` | `True` | Enable smooth transition animation |
-| `AnimationDuration` | `Integer` | `367` | Thumb slide duration in milliseconds |
-| `Enabled` | `Boolean` | `True` | Whether the component is interactive |
-| `TabStop` | `Boolean` | `False` | The switch is mouse-only and takes no focus |
-| `ParentColor` | `Boolean` | `True` | Follow the parent's background color |
-| `Color` | `TColor` | *(parent)* | Background color; assigning it turns `ParentColor` off |
-| **Color customization** | | | |
-| `TrackFrameColor` | `TColor` | `clDefault` | Track border/stroke color |
-| `TrackColorOff` | `TColor` | `clDefault` | Track fill color when Off |
-| `TrackColorOn` | `TColor` | `clDefault` | Track fill color when On |
-| `ThumbColorOff` | `TColor` | `clDefault` | Thumb color when Off |
-| `ThumbColorOn` | `TColor` | `clDefault` | Thumb color when On |
-| **Text label** | | | |
-| `ShowText` | `Boolean` | `False` | Show or hide the text label |
-| `TextOn` | `string` | `'On'` | Label text when Checked = True |
-| `TextOff` | `string` | `'Off'` | Label text when Checked = False |
-| `TextPosition` | `TTextPosition` | `tpRight` | Label position: `tpLeft` or `tpRight` |
-| `TextSpacing` | `Integer` | `12` | Distance in pixels from the track outline to the text |
-| `Font` | `TFont` | *(inherited)* | Font used for text label rendering |
+## Documentation
 
-## Events
+- [API reference](docs/API.md) — every property, method and event, and the
+  behaviour behind them.
+- [Changelog](CHANGELOG.md).
 
-| Event | Type | Description |
-|-------|------|-------------|
-| `OnChange` | `TNotifyEvent` | Fires when the user toggles the switch. Setting `Checked` in code does not fire it |
-| `OnClick` | `TNotifyEvent` | Standard click event (inherited) |
+## Licence
 
-## Adding to an Existing Project (without IDE installation)
-
-If you prefer not to install the package, add the source path directly:
-
-1. Open your project in Delphi
-2. Go to **Project → Options → Delphi Compiler → Search Path**
-3. Add the path to the `source/` folder of this repository
-4. Add `uses ToggleSwitch;` to the desired unit
-
-## License
-
-MIT
+MIT. See [LICENSE](LICENSE).
