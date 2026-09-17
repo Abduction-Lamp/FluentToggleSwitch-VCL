@@ -3,7 +3,10 @@
         <ProjectGuid>{4A4D3CB0-7C52-452D-A027-DD0424B956A2}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="packages\ToggleSwitch.dproj">
+        <Projects Include="packages\FluentToggleSwitchR.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="packages\FluentToggleSwitchD.dproj">
             <Dependencies/>
         </Projects>
         <Projects Include="demo\Demo.dproj">
@@ -20,14 +23,23 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="ToggleSwitch">
-        <MSBuild Projects="packages\ToggleSwitch.dproj"/>
+    <Target Name="FluentToggleSwitchR">
+        <MSBuild Projects="packages\FluentToggleSwitchR.dproj"/>
     </Target>
-    <Target Name="ToggleSwitch:Clean">
-        <MSBuild Projects="packages\ToggleSwitch.dproj" Targets="Clean"/>
+    <Target Name="FluentToggleSwitchR:Clean">
+        <MSBuild Projects="packages\FluentToggleSwitchR.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="ToggleSwitch:Make">
-        <MSBuild Projects="packages\ToggleSwitch.dproj" Targets="Make"/>
+    <Target Name="FluentToggleSwitchR:Make">
+        <MSBuild Projects="packages\FluentToggleSwitchR.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="FluentToggleSwitchD">
+        <MSBuild Projects="packages\FluentToggleSwitchD.dproj"/>
+    </Target>
+    <Target Name="FluentToggleSwitchD:Clean">
+        <MSBuild Projects="packages\FluentToggleSwitchD.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="FluentToggleSwitchD:Make">
+        <MSBuild Projects="packages\FluentToggleSwitchD.dproj" Targets="Make"/>
     </Target>
     <Target Name="Demo">
         <MSBuild Projects="demo\Demo.dproj"/>
@@ -48,13 +60,13 @@
         <MSBuild Projects="tests\Tests.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="ToggleSwitch;Demo;Tests"/>
+        <CallTarget Targets="FluentToggleSwitchR;FluentToggleSwitchD;Demo;Tests"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ToggleSwitch:Clean;Demo:Clean;Tests:Clean"/>
+        <CallTarget Targets="FluentToggleSwitchR:Clean;FluentToggleSwitchD:Clean;Demo:Clean;Tests:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ToggleSwitch:Make;Demo:Make;Tests:Make"/>
+        <CallTarget Targets="FluentToggleSwitchR:Make;FluentToggleSwitchD:Make;Demo:Make;Tests:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

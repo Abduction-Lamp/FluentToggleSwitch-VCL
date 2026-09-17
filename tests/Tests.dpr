@@ -1,26 +1,25 @@
 program Tests;
 
 {$IFNDEF TESTINSIGHT}
-{$APPTYPE CONSOLE}
+  {$APPTYPE CONSOLE}
 {$ENDIF}
+
 {$STRONGLINKTYPES ON}
+{$WARN SYMBOL_PLATFORM OFF}
+
 uses
-  {$IFDEF FASTMM}
-  FastMM4,
-  {$ENDIF}
-  DUnitX.MemoryLeakMonitor.FastMM4,
   System.SysUtils,
-  {$IFDEF TESTINSIGHT}
+{$IFDEF TESTINSIGHT}
   TestInsight.DUnitX,
-  {$ELSE}
+{$ELSE}
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
-  {$ENDIF }
+{$ENDIF }
   DUnitX.TestFramework,
-  ToggleSwitch in '..\source\ToggleSwitch.pas',
-  ToggleSwitch.Tests in 'ToggleSwitch.Tests.pas';
+  Fluent.ToggleSwitch in '..\source\Fluent.ToggleSwitch.pas',
+  Fluent.ToggleSwitch.Tests.LeakMonitor in 'Fluent.ToggleSwitch.Tests.LeakMonitor.pas',
+  Fluent.ToggleSwitch.Tests in 'Fluent.ToggleSwitch.Tests.pas';
 
-{ keep comment here to protect the following conditional from being removed by the IDE when adding a unit }
 {$IFNDEF TESTINSIGHT}
 var
   runner: ITestRunner;
@@ -28,36 +27,30 @@ var
   logger: ITestLogger;
   nunitLogger : ITestLogger;
 {$ENDIF}
+
 begin
+  ReportMemoryLeaksOnShutdown := DebugHook <> 0;
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
 {$ELSE}
   try
-    //Check command line options, will exit if invalid
     TDUnitX.CheckCommandLine;
-    //Create the test runner
     runner := TDUnitX.CreateRunner;
-    //Tell the runner to use RTTI to find Fixtures
     runner.UseRTTI := True;
-    //When true, Assertions must be made during tests;
-    runner.FailsOnNoAsserts := False;
+    runner.FailsOnNoAsserts := True;
 
-    //tell the runner how we will log things
-    //Log to the console window if desired
     if TDUnitX.Options.ConsoleMode <> TDunitXConsoleMode.Off then
     begin
       logger := TDUnitXConsoleLogger.Create(TDUnitX.Options.ConsoleMode = TDunitXConsoleMode.Quiet);
       runner.AddLogger(logger);
     end;
-    //Generate an NUnit compatible XML File
+
     nunitLogger := TDUnitXXMLNUnitFileLogger.Create(TDUnitX.Options.XMLOutputFile);
     runner.AddLogger(nunitLogger);
 
-    //Run tests
     results := runner.Execute;
     if not results.AllPassed then
       System.ExitCode := EXIT_ERRORS;
-
   except
     on E: Exception do
       System.Writeln(E.ClassName, ': ', E.Message);

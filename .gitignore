@@ -37,5 +37,5 @@ __history/
 # Claude Code
 .claude/
 CLAUDE.md
-docs/*
+docs/reviews/
 !docs/images/
