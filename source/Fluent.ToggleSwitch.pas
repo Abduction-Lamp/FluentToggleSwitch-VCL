@@ -83,7 +83,6 @@ type
     FTextSpacing: Integer;
     FTextWidth: Integer;
     FTextHeight: Integer;
-    FTextAscent: Integer;
     FShowHeader: Boolean;
     FHeaderText: string;
     FHeaderPosition: TFluentHeaderPosition;
@@ -171,7 +170,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    function TextBaseline: Integer;
+    function TextTop: Integer;
 
   published
     property Align;
@@ -684,7 +683,6 @@ begin
     // Taken whether or not the label is shown, because the baseline is where it would sit
     GetTextMetrics(DC, TM);
     FTextHeight := TM.tmHeight;
-    FTextAscent := TM.tmAscent;
 
     if FShowText then
     begin
@@ -795,13 +793,14 @@ begin
   Result.Right := Result.Left + BlockWidth;
 end;
 
-// Where Paint puts the text, so the form designer lines the label up with the captions beside it
-function TFluentToggleSwitch.TextBaseline: Integer;
+// Where Paint puts the top of the label. The designer wants a baseline, and turns this into one
+// with the ascent of its own reckoning, which sits a row below the one GDI draws on
+function TFluentToggleSwitch.TextTop: Integer;
 var
   Area: TRect;
 begin
   Area := SwitchArea;
-  Result := Area.Top + (Area.Height - FTextHeight) div 2 + FTextAscent;
+  Result := Area.Top + (Area.Height - FTextHeight) div 2;
 end;
 
 procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
