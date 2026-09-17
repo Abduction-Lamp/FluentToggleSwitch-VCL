@@ -246,6 +246,12 @@ type
     procedure Animation_ShouldStopWhenItArrives;
 
     [Test]
+    procedure RecreatedWindow_ShouldKeepItsLook;
+
+    [Test]
+    procedure RecreatedWindow_ShouldKeepTheAnimationGoing;
+
+    [Test]
     procedure AnimationDuration_ShouldClampToPositive;
 
     [Test]
@@ -361,21 +367,27 @@ uses
   System.SysUtils;
 
 type
-  // Counting the paints is how a test can tell a timer that stopped from one
-  // that is still asking for frames
-  TCountingSwitch = class(TFluentToggleSwitch)
+  // Reaches the two things a test cannot get at from outside: how often the
+  // switch was asked to paint, and a window built afresh under it
+  TProbeSwitch = class(TFluentToggleSwitch)
   private
     FPaints: Integer;
   protected
     procedure Paint; override;
   public
+    procedure Rebuild;
     property Paints: Integer read FPaints write FPaints;
   end;
 
-procedure TCountingSwitch.Paint;
+procedure TProbeSwitch.Paint;
 begin
   Inc(FPaints);
   inherited;
+end;
+
+procedure TProbeSwitch.Rebuild;
+begin
+  RecreateWnd;
 end;
 
 const
@@ -1408,13 +1420,13 @@ end;
 // second for as long as the program runs
 procedure TToggleSwitchTest.Animation_ShouldStopWhenItArrives;
 var
-  Switch: TCountingSwitch;
+  Switch: TProbeSwitch;
 begin
   Assert.IsTrue(SystemAnimationsOn,
     'These tests need interface animation left on in Windows');
   ShowTheForm;
 
-  Switch := TCountingSwitch.Create(FForm);
+  Switch := TProbeSwitch.Create(FForm);
   Switch.Parent := FForm;
   Switch.ScaleForPPI(DesignPPI);
   Switch.ShowFocus := False;
@@ -1429,6 +1441,86 @@ begin
   try
     Assert.AreEqual(0, Switch.Paints, 'A finished animation leaves no timer behind');
   finally
+    Switch.Free;
+  end;
+end;
+
+// A window is rebuilt whenever something about it has to change, and the
+// switch works its layout out again when the new one arrives
+procedure TToggleSwitchTest.RecreatedWindow_ShouldKeepItsLook;
+var
+  Switch: TProbeSwitch;
+  Before, After: TBitmap;
+  W, H: Integer;
+begin
+  Switch := TProbeSwitch.Create(FForm);
+  Before := nil;
+  After := nil;
+  try
+    Switch.Parent := FForm;
+    Switch.ScaleForPPI(DesignPPI);
+    Switch.ShowFocus := False;
+    Switch.ShowText := True;
+    Switch.HeaderText := 'Header';
+    Switch.ShowHeader := True;
+    Switch.Checked := True;
+    W := Switch.Width;
+    H := Switch.Height;
+    Before := RenderToBitmap(Switch);
+
+    Switch.Rebuild;
+
+    Assert.AreEqual(W, Switch.Width, 'A window built afresh leaves the width alone');
+    Assert.AreEqual(H, Switch.Height, 'and the height');
+    After := RenderToBitmap(Switch);
+    Assert.AreEqual('', DescribeDifference(Before, After),
+      'and the switch looks exactly as it did');
+  finally
+    After.Free;
+    Before.Free;
+    Switch.Free;
+  end;
+end;
+
+// The timer belongs to the window, so a window replaced mid-slide takes the
+// timer with it and the thumb would stop where it stood
+procedure TToggleSwitchTest.RecreatedWindow_ShouldKeepTheAnimationGoing;
+var
+  Switch: TProbeSwitch;
+  Settled: TFluentToggleSwitch;
+  Arrived, Moved: TBitmap;
+begin
+  Assert.IsTrue(SystemAnimationsOn,
+    'These tests need interface animation left on in Windows');
+  ShowTheForm;
+
+  Switch := TProbeSwitch.Create(FForm);
+  Arrived := nil;
+  Moved := nil;
+  try
+    Switch.Parent := FForm;
+    Switch.ScaleForPPI(DesignPPI);
+    Switch.ShowFocus := False;
+    Switch.AnimationDuration := 1;
+
+    Settled := SettledSwitch(True);
+    try
+      Arrived := RenderToBitmap(Settled);
+    finally
+      Settled.Free;
+    end;
+
+    // Nothing is pumped in between, so the slide is still at its first frame
+    Switch.Checked := True;
+    Switch.Rebuild;
+    PumpFor(500);
+
+    Moved := RenderToBitmap(Switch);
+    Assert.AreEqual('', DescribeDifference(Arrived, Moved),
+      'The thumb finished its travel on the new window');
+  finally
+    Moved.Free;
+    Arrived.Free;
     Switch.Free;
   end;
 end;
