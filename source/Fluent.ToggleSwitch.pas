@@ -1176,13 +1176,16 @@ begin
   UpdateVisualState;
 end;
 
+// No press in flight means nothing to drop, and MouseUp has already settled the ones the system cancels
 procedure TFluentToggleSwitch.CancelPress;
 begin
+  if not FPressed then
+    Exit;
+
   FPressed := False;
   FDragged := False;
   FDragDelta := 0;
-  FFadeValue := Ord(FChecked);
-  FFadeT := 1.0;
+  SettleThumb;
 end;
 
 procedure TFluentToggleSwitch.CMMouseLeave(var Msg: TMessage);
