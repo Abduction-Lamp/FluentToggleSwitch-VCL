@@ -33,6 +33,7 @@ type
     procedure Release(X: Integer);
     procedure PressAt(X, Y: Integer);
     procedure MoveToAt(X, Y: Integer);
+    procedure HoverAt(X, Y: Integer);
     procedure ReleaseAt(X, Y: Integer);
     procedure HandleDblClick(Sender: TObject);
     procedure FreeTheSender(Sender: TObject);
@@ -190,6 +191,12 @@ type
     procedure Click_OnHeader_ShouldNotToggle;
 
     [Test]
+    procedure Click_OnHeaderBelow_ShouldNotToggle;
+
+    [Test]
+    procedure Hover_OnTheHeader_ShouldNotLightTheSwitch;
+
+    [Test]
     procedure DragBackPastMiddle_ShouldTurnOffAndFireOnChange;
 
     [Test]
@@ -227,6 +234,21 @@ type
 
     [Test]
     procedure Paint_ShouldNotChangeSize;
+
+    [Test]
+    procedure TrackColors_ShouldReachTheTrack;
+
+    [Test]
+    procedure ThumbColors_ShouldReachTheThumb;
+
+    [Test]
+    procedure Color_ShouldFillTheBackground;
+
+    [Test]
+    procedure Disabled_ShouldPaleTheThumb;
+
+    [Test]
+    procedure TextTop_ShouldFollowTheHeader;
 
     [Test]
     procedure CreateAndDestroy_ShouldNotLeak;
@@ -453,6 +475,12 @@ end;
 procedure TToggleSwitchTest.MoveToAt(X, Y: Integer);
 begin
   FToggle.Perform(WM_MOUSEMOVE, MK_LBUTTON, MakeLParam(Word(X), Word(Y)));
+end;
+
+// MoveToAt says the left button is down, which a hover does not
+procedure TToggleSwitchTest.HoverAt(X, Y: Integer);
+begin
+  FToggle.Perform(WM_MOUSEMOVE, 0, MakeLParam(Word(X), Word(Y)));
 end;
 
 procedure TToggleSwitchTest.ReleaseAt(X, Y: Integer);
@@ -1238,6 +1266,115 @@ begin
   Assert.AreEqual(H, FToggle.Height, 'Painting leaves the height alone');
 end;
 
+// The five colour properties were checked for storing what they were given and
+// nothing else, so the choice Paint makes between them went unwatched
+procedure TToggleSwitchTest.TrackColors_ShouldReachTheTrack;
+var
+  Bmp: TBitmap;
+begin
+  FToggle.TrackColorOff := clRed;
+  FToggle.TrackColorOn := clLime;
+  // Each reading is taken from the end the thumb is not at, since the thumb is
+  // painted over the track
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[ThumbOnX, FToggle.Height div 2],
+      'An off track takes the colour it was given');
+  finally
+    Bmp.Free;
+  end;
+  FToggle.Checked := True;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clLime), Bmp.Canvas.Pixels[ThumbOffX, FToggle.Height div 2],
+      'and so does an on one');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+procedure TToggleSwitchTest.ThumbColors_ShouldReachTheThumb;
+var
+  Bmp: TBitmap;
+begin
+  FToggle.ThumbColorOff := clRed;
+  FToggle.ThumbColorOn := clLime;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[ThumbOffX, FToggle.Height div 2],
+      'An off thumb takes the colour it was given');
+  finally
+    Bmp.Free;
+  end;
+  FToggle.Checked := True;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clLime), Bmp.Canvas.Pixels[ThumbOnX, FToggle.Height div 2],
+      'and so does an on one');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// csOpaque means nobody erases behind the switch, so the switch does it itself
+procedure TToggleSwitchTest.Color_ShouldFillTheBackground;
+var
+  Bmp: TBitmap;
+begin
+  FToggle.ParentColor := False;
+  FToggle.Color := clRed;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    // The corner is outside the rounded cap of the track
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[0, 0],
+      'The switch fills its own rectangle');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// Disabled is two lighter alphas, not a different shape, so the thumb is where
+// the difference shows plainest
+procedure TToggleSwitchTest.Disabled_ShouldPaleTheThumb;
+var
+  Lively, Grey: TBitmap;
+  Y: Integer;
+begin
+  Y := FToggle.Height div 2;
+  Lively := nil;
+  Grey := nil;
+  try
+    Lively := RenderToBitmap(FToggle);
+    FToggle.Enabled := False;
+    Grey := RenderToBitmap(FToggle);
+    Assert.IsTrue(GetRValue(Grey.Canvas.Pixels[ThumbOffX, Y]) >
+                  GetRValue(Lively.Canvas.Pixels[ThumbOffX, Y]),
+      'A disabled thumb is paler than a live one');
+  finally
+    Grey.Free;
+    Lively.Free;
+  end;
+end;
+
+// What the form designer asks for when it lines the caption up with the ones
+// around it. The header moved it and nothing watched
+procedure TToggleSwitchTest.TextTop_ShouldFollowTheHeader;
+var
+  Bare, HeightBefore: Integer;
+begin
+  FToggle.ShowText := True;
+  Bare := FToggle.TextTop;
+  HeightBefore := FToggle.Height;
+  FToggle.HeaderText := 'Header';
+  FToggle.ShowHeader := True;
+  Assert.AreEqual(Bare + (FToggle.Height - HeightBefore), FToggle.TextTop,
+    'A header on top moves the caption down by the room it took');
+  FToggle.HeaderPosition := hpBottom;
+  Assert.AreEqual(Bare, FToggle.TextTop, 'and a header below leaves it where it was');
+  FToggle.ShowText := False;
+  Assert.AreEqual(Bare, FToggle.TextTop, 'The baseline is published with the caption hidden too');
+end;
+
 procedure TToggleSwitchTest.CreateAndDestroy_ShouldNotLeak;
 begin
   // The leak itself is caught by the per-test monitor
@@ -1293,6 +1430,49 @@ begin
   Release(ThumbOnX);
   Assert.IsFalse(FToggle.Checked, 'A drag that lost the capture carries on without the switch');
   Assert.IsFalse(FOnChangeFired, 'and fires nothing');
+end;
+
+// The band the header takes is cut off the bottom when it sits there, and no
+// test walked that side of SwitchArea
+procedure TToggleSwitchTest.Click_OnHeaderBelow_ShouldNotToggle;
+begin
+  FToggle.HeaderText := 'Header';
+  FToggle.ShowHeader := True;
+  FToggle.HeaderPosition := hpBottom;
+  PressAt(FToggle.Width div 2, FToggle.Height - 1);
+  ReleaseAt(FToggle.Width div 2, FToggle.Height - 1);
+  Assert.IsFalse(FToggle.Checked, 'A header below the switch is no target either');
+  PressAt(FToggle.Width div 2, 2);
+  ReleaseAt(FToggle.Width div 2, 2);
+  Assert.IsTrue(FToggle.Checked, 'and the row above it still is');
+end;
+
+// Hover is raised by MouseMove alone, over the area the pointer answers for.
+// Entering the window over the header used to light the switch up
+procedure TToggleSwitchTest.Hover_OnTheHeader_ShouldNotLightTheSwitch;
+var
+  Idle, OnHeader, OnSwitch: TBitmap;
+begin
+  FToggle.HeaderText := 'Header';
+  FToggle.ShowHeader := True;
+  Idle := nil;
+  OnHeader := nil;
+  OnSwitch := nil;
+  try
+    Idle := RenderToBitmap(FToggle);
+    HoverAt(FToggle.Width div 2, 1);
+    OnHeader := RenderToBitmap(FToggle);
+    Assert.AreEqual('', DescribeDifference(Idle, OnHeader),
+      'The header is not a target, so the switch stays as it was');
+    HoverAt(ThumbOffX, FToggle.Height - TrackAreaHeight div 2);
+    OnSwitch := RenderToBitmap(FToggle);
+    Assert.IsTrue(DescribeDifference(Idle, OnSwitch) <> '',
+      'and the switch itself does light up under the pointer');
+  finally
+    OnSwitch.Free;
+    OnHeader.Free;
+    Idle.Free;
+  end;
 end;
 
 procedure TToggleSwitchTest.ParentColor_ShouldBeTrueByDefault;
