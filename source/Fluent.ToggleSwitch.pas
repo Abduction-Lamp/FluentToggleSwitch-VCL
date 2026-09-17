@@ -6,7 +6,6 @@ uses
   System.Classes,
   System.Math,
 
-  Vcl.ExtCtrls,
   Vcl.Controls,
   Vcl.Graphics,
 
@@ -53,7 +52,7 @@ type
     FDragStartX: Integer;
     FDragDelta: Single;
     FDragged: Boolean;
-    FAnimTimer: TTimer;
+    FAnimating: Boolean;
     FAnimProgress: Single;
     FFadeValue: Single;
     FFadeFrom: Single;
@@ -96,10 +95,11 @@ type
     procedure SetChecked(Value: Boolean);
     procedure SetAnimationDuration(Value: Integer);
     procedure StartTimer;
+    procedure StopTimer;
     procedure StartAnimation;
     procedure StartFade;
     procedure SettleThumb;
-    procedure HandleAnimTimer(Sender: TObject);
+    procedure AdvanceAnimation;
     function DragTravel: Single;
     procedure DragThumb(X: Integer);
     procedure CancelPress;
@@ -148,6 +148,7 @@ type
     procedure WMSetFocus(var Msg: TWMSetFocus);    message WM_SETFOCUS;
     procedure WMKillFocus(var Msg: TWMKillFocus);  message WM_KILLFOCUS;
     procedure WMUpdateUIState(var Msg: TMessage);  message WM_UPDATEUISTATE;
+    procedure WMTimer(var Msg: TWMTimer);          message WM_TIMER;
     procedure CMSysColorChange(var Msg: TMessage); message CM_SYSCOLORCHANGE;
     procedure CMWinIniChange(var Msg: TMessage);   message CM_WININICHANGE;
 
@@ -246,6 +247,9 @@ const
 
   DefaultTextOn         = 'On';
   DefaultTextOff        = 'Off';
+
+  AnimationTimerId      = 1;
+  AnimationInterval     = 16;
 
   ThumbSlideDelay       = 33;
   StateDuration         = 83;
@@ -877,13 +881,19 @@ procedure TFluentToggleSwitch.CreateWnd;
 begin
   inherited;
   LayoutChanged;
+
+  // The timer belonged to the window that went, and an animation in flight still wants one
+  if FAnimating then
+  begin
+    FAnimating := False;
+    StartTimer;
+  end;
 end;
 
 destructor TFluentToggleSwitch.Destroy;
 begin
   if FGone <> nil then
     FGone^ := True;
-  FAnimTimer.Free;
   FHeaderFont.Free;
   inherited;
 end;
@@ -915,13 +925,21 @@ end;
 
 procedure TFluentToggleSwitch.StartTimer;
 begin
-  if FAnimTimer = nil then
-  begin
-    FAnimTimer := TTimer.Create(Self);
-    FAnimTimer.Interval := 16;
-    FAnimTimer.OnTimer := HandleAnimTimer;
-  end;
-  FAnimTimer.Enabled := True;
+  if FAnimating or not HandleAllocated then
+    Exit;
+
+  FAnimating := True;
+  SetTimer(Handle, AnimationTimerId, AnimationInterval, nil);
+end;
+
+procedure TFluentToggleSwitch.StopTimer;
+begin
+  if not FAnimating then
+    Exit;
+
+  FAnimating := False;
+  if HandleAllocated then
+    KillTimer(Handle, AnimationTimerId);
 end;
 
 procedure TFluentToggleSwitch.StartAnimation;
@@ -956,7 +974,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.HandleAnimTimer(Sender: TObject);
+procedure TFluentToggleSwitch.AdvanceAnimation;
 var
   Counter: Int64;
   T: Single;
@@ -1005,7 +1023,8 @@ begin
     end;
   end;
 
-  FAnimTimer.Enabled := Busy;
+  if not Busy then
+    StopTimer;
   Invalidate;
 end;
 
@@ -1233,6 +1252,14 @@ begin
     UpdateVisualState;
   end;
   Invalidate;
+end;
+
+procedure TFluentToggleSwitch.WMTimer(var Msg: TWMTimer);
+begin
+  if Msg.TimerID = AnimationTimerId then
+    AdvanceAnimation
+  else
+    inherited;
 end;
 
 procedure TFluentToggleSwitch.WMUpdateUIState(var Msg: TMessage);
