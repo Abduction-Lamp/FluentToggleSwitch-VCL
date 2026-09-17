@@ -143,6 +143,7 @@ type
 
     procedure CMFontChanged(var Msg: TMessage);    message CM_FONTCHANGED;
     procedure CMMouseLeave(var Msg: TMessage);     message CM_MOUSELEAVE;
+    procedure WMCancelMode(var Msg: TMessage);     message WM_CANCELMODE;
     procedure CMEnabledChanged(var Msg: TMessage); message CM_ENABLEDCHANGED;
     procedure WMSetFocus(var Msg: TWMSetFocus);    message WM_SETFOCUS;
     procedure WMKillFocus(var Msg: TWMKillFocus);  message WM_KILLFOCUS;
@@ -1050,15 +1051,16 @@ begin
   begin
     FSliding := False;
 
-    if TabStop and not (csDesigning in ComponentState) then
-      Winapi.Windows.SetFocus(Handle);
-
     FPressed := True;
     FDragStartX := X;
     FDragDelta := 0;
     FDragged := False;
 
     UpdateVisualState;
+
+    // Taking the focus can run an OnExit that opens a dialog, and that cancels the press just made
+    if TabStop and not (csDesigning in ComponentState) then
+      Winapi.Windows.SetFocus(Handle);
   end;
 end;
 
@@ -1106,6 +1108,13 @@ var
   IsOver: Boolean;
 begin
   inherited;
+
+  // Another window may take the capture without the system cancelling the gesture
+  if FPressed and not MouseCapture then
+  begin
+    CancelPress;
+    UpdateVisualState;
+  end;
 
   IsOver := PtInRect(SwitchArea, Point(X, Y));
 
@@ -1187,6 +1196,14 @@ begin
   FDragged := False;
   FDragDelta := 0;
   SettleThumb;
+end;
+
+// The system takes the gesture back, so the button up TControl synthesises next finds nothing to act on
+procedure TFluentToggleSwitch.WMCancelMode(var Msg: TMessage);
+begin
+  CancelPress;
+  UpdateVisualState;
+  inherited;
 end;
 
 // MouseMove raises the hover, by the area the pointer answers for; once the pointer is gone
