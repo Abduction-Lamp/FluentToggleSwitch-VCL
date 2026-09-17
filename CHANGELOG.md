@@ -234,12 +234,12 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
-[2.0.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.6.0...v2.0.0
-[1.6.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.0.1...v1.1.0
-[1.0.1]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/releases/tag/v1.0.0
+[2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
+[1.6.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.0.1...v1.1.0
+[1.0.1]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/releases/tag/v1.0.0

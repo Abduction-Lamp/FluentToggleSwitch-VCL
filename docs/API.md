@@ -421,9 +421,9 @@ Each of these has an issue of its own.
 
 | | Issue |
 |---|---|
-| Dark surfaces, VCL styles, and letting the parent paint the background | [#10](https://github.com/Abduction-Lamp/VCL-ToggleSwitch/issues/10) |
-| `TAction` through an action link | [#11](https://github.com/Abduction-Lamp/VCL-ToggleSwitch/issues/11) |
-| Right-to-left layout, though `BiDiMode` is published | [#12](https://github.com/Abduction-Lamp/VCL-ToggleSwitch/issues/12) |
-| Accessibility: the switch reports neither role nor state to a screen reader | [#13](https://github.com/Abduction-Lamp/VCL-ToggleSwitch/issues/13) |
-| A header outside the control's own window, as `TLabeledEdit` has | [#14](https://github.com/Abduction-Lamp/VCL-ToggleSwitch/issues/14) |
-| `ReadOnly`, a way back to following `Font` for the header, an accelerator in the header, and a `TCustom` ancestor to derive from | [#15](https://github.com/Abduction-Lamp/VCL-ToggleSwitch/issues/15) |
+| Dark surfaces, VCL styles, and letting the parent paint the background | [#10](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/10) |
+| `TAction` through an action link | [#11](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/11) |
+| Right-to-left layout, though `BiDiMode` is published | [#12](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/12) |
+| Accessibility: the switch reports neither role nor state to a screen reader | [#13](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/13) |
+| A header outside the control's own window, as `TLabeledEdit` has | [#14](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/14) |
+| `ReadOnly`, a way back to following `Font` for the header, an accelerator in the header, and a `TCustom` ancestor to derive from | [#15](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/15) |
