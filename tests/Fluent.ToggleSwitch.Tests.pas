@@ -357,6 +357,9 @@ type
 
 implementation
 
+uses
+  System.SysUtils;
+
 type
   // Counting the paints is how a test can tell a timer that stopped from one
   // that is still asking for frames
@@ -374,9 +377,6 @@ begin
   Inc(FPaints);
   inherited;
 end;
-
-uses
-  System.SysUtils;
 
 const
   // Design pixels the expectations below are written in. Setup pins the
