@@ -5,19 +5,124 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.0] - 2026-09-10
+## [2.0.0] - 2026-09-17
+
+The switch answers the keyboard, carries a header, and follows the accent
+colour while the program runs. The unit and the package are renamed, the
+package is split in two, and two events mean something different, so this is
+not a drop-in replacement for 1.6. What to change on the way up is at the end
+of this section.
+
+A 1.7.0 was prepared and never released; everything it held is here.
 
 ### Added
 
-- The form designer now gets the baseline of the text label, so the switch can be lined up with the captions of buttons and edits next to it. A new design-time unit carries this; the component unit itself stays free of design-time dependencies. A vertical centre guide is not possible, as the designer has no guide type for it.
-
-### Fixed
-
-- `TextSpacing` was not scaled for the display. On a screen at 300% the gap stayed at its unscaled size while everything around it tripled.
+- The switch answers the keyboard. Space toggles it when the key comes back
+  up, so holding it down does not fire over and over. `TabStop` now defaults
+  to `True`, and `KeyboardToggle` turns the key off without taking the switch
+  out of the tab order.
+- A focus ring, drawn around the switch and its caption. It follows the
+  convention Windows sets: hidden until someone navigates by keyboard, shown
+  from then on. `ShowFocus` decides whether the switch takes part in that at
+  all.
+- A header: a line of text above or below the switch that describes it, the
+  way a label describes an edit box, with `ShowHeader`, `HeaderText`,
+  `HeaderPosition`, `HeaderAlignment`, `HeaderSpacing` and a `HeaderFont` of
+  its own. The header is not a target for the pointer, and turning it on takes
+  its room out of the form rather than moving the switch. A switch that has
+  never been given a header carries its own `Name`.
+- The form designer is given the baseline of the caption, so the switch lines
+  up with the captions of the labels, edits and buttons around it. The
+  baseline is published whether or not the caption is shown, the way a check
+  box publishes one without a caption. A new design-time unit carries this and
+  the palette registration; the component unit stays free of design-time
+  dependencies. A vertical centre guide is not possible, the designer having
+  no guide type for it.
+- The switch follows the Windows accent colour while the program runs, not
+  only at startup.
+- A palette icon.
+- `TextTop`, a public method saying where the caption is painted. It exists
+  for the designer.
+- An API reference, [docs/API.md](docs/API.md), covering every property,
+  method and event, and the behaviour behind them.
 
 ### Changed
 
-- `TextSpacing` is measured from the track outline rather than from the edge of the control, and now defaults to 12, which is the gap the WinUI template uses. It previously produced a gap of 10.
+- **Breaking.** The unit is `Fluent.ToggleSwitch`, the enumerations are
+  `TFluentTextPosition` and `TFluentHeaderPosition`, and the palette page is
+  **Fluent**. The class keeps its name.
+- **Breaking.** One package became two: `FluentToggleSwitchR` holds the
+  component and builds for Win32 and Win64, `FluentToggleSwitchD` holds the
+  design-time unit and is installed into the IDE. A program that uses the
+  component no longer drags a dependency on `designide` behind it.
+- **Breaking.** `OnChange` reports the value and no longer cares who moved it,
+  so it fires for an assignment in code as well as for the user. This is what
+  `Toggled` means in WinUI and what `OnClick` means on a `TCheckBox`. Reading
+  a DFM still raises nothing.
+- **Breaking.** `OnClick` reports the action: it fires only when the user
+  toggles the switch, and after the value has moved, so a handler reads what
+  the user just asked for. It used to be the standard click, which arrived
+  before the value moved and also for a press that changed nothing.
+- **Breaking.** The colour properties default to `clDefault` rather than
+  `clNone`. The meaning is unchanged: leave it to the theme.
+- **Breaking.** `TextSpacing` defaults to 12 rather than 8, and is measured
+  from the outline of the track rather than from the edge of the control,
+  which is how the WinUI template measures it.
+- **Breaking.** The switch measures 42 by 22 at 100% rather than 44 by 24. It
+  keeps one pixel around the track, which is what the focus ring needs. Use
+  `Margins` where more room is wanted.
+- **Breaking.** `TabStop` defaults to `True`. In 1.6 the switch was mouse-only
+  and deliberately kept out of the tab order; it answers the keyboard now.
+- Scaling is worked out from `CurrentPPI` and from the design numbers at every
+  step, rather than from a scale of the component's own and rounded values
+  carried forward. A form moved between monitors of different scale and back
+  lands exactly where it started.
+- The animation timer sits on the window of the switch itself. It used to be a
+  `TTimer`, which allocates a hidden window of its own, and the first thing to
+  animate created one per switch: a passing pointer was enough. A form of
+  thirty switches kept thirty windows long after the animation ended.
+- The layout is worked out once per event rather than once per property.
+  Loading a form used to measure the text for every property that arrived and
+  throw the lot away at the end; a change of scale used to run the layout three
+  times, twice against a scale not yet updated.
+- The colour of the track follows the thumb while it is dragged, and both
+  directions cross-fade. WinUI holds the starting colour through the gesture
+  and snaps back from on to off. Both departures are deliberate and are set
+  out in the API reference.
+
+### Fixed
+
+- `TextSpacing` was not scaled for the display. On a screen at 300% the gap
+  stayed at its unscaled size while everything around it tripled.
+- A gesture the system takes back is now dropped, with the thumb returning and
+  no event raised. That covers a menu or a modal dialog opening mid-gesture,
+  the switch being disabled mid-gesture, and another window taking the mouse
+  capture. A drag that reached past the middle used to go through with it.
+- A drag that began while the thumb was still travelling counted from where
+  the thumb would have come to rest rather than from where it was, so the
+  thumb could leave the track and jump on release.
+- Freeing the switch from its own `OnChange` or `OnClick` handler is now safe.
+  The switch used to carry on using itself after the handler returned.
+
+### Removed
+
+- The `ToggleSwitch` unit, the `ToggleSwitch` package and the `ToggleSwitch`
+  palette page. See the rename above.
+
+### Upgrading from 1.6
+
+1. Uninstall the old package, then build `FluentToggleSwitchR` and install
+   `FluentToggleSwitchD`.
+2. Replace `ToggleSwitch` with `Fluent.ToggleSwitch` in every uses clause, and
+   `TTextPosition` with `TFluentTextPosition` wherever it is named.
+3. Forms keep working: the properties are read by name, and the ones that were
+   renamed are types rather than properties. Switches placed on a form will
+   take their new size the next time the form is loaded.
+4. Read every `OnChange` handler again. It now fires for assignments in code,
+   which it did not before, so a handler that writes back to another switch
+   can now come round to itself.
+5. Read every `OnClick` handler again. It now fires only on a real toggle, and
+   after the value has moved.
 
 ## [1.6.0] - 2026-09-10
 
@@ -129,7 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
-[1.7.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.6.0...v1.7.0
+[2.0.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.6.0...v2.0.0
 [1.6.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Abduction-Lamp/VCL-ToggleSwitch/compare/v1.3.0...v1.4.0
