@@ -75,6 +75,7 @@ type
     FTrackColorOn: TColor;
     FThumbColorOff: TColor;
     FThumbColorOn: TColor;
+    FKnownAccent: ARGB;
     FTextOn: string;
     FTextOff: string;
     FShowText: Boolean;
@@ -138,6 +139,7 @@ type
     function BlockWidth: Integer;
     function SwitchIndent: Integer;
     function SwitchArea: TRect;
+    procedure RereadAccent;
 
     procedure CMFontChanged(var Msg: TMessage);    message CM_FONTCHANGED;
     procedure CMMouseEnter(var Msg: TMessage);     message CM_MOUSEENTER;
@@ -373,15 +375,6 @@ begin
   Result := Allowed;
 end;
 
-function AccentColorsChanged: Boolean;
-var
-  Before: ARGB;
-begin
-  Before := OnTrackFill[isNormal];
-  InitAccentColors;
-  Result := OnTrackFill[isNormal] <> Before;
-end;
-
 function TColorToARGB(C: TColor): ARGB;
 var
   R, G, B: Byte;
@@ -433,6 +426,7 @@ begin
   FTrackColorOn := clDefault;
   FThumbColorOff := clDefault;
   FThumbColorOn := clDefault;
+  FKnownAccent := OnTrackFill[isNormal];
   FTextOn := DefaultTextOn;
   FTextOff := DefaultTextOff;
   FShowText := False;
@@ -1224,18 +1218,28 @@ begin
   UpdateFocusVisibility;
 end;
 
+// Each instance keeps its own baseline, because OnTrackFill is shared and a sibling may have refreshed it first
+procedure TFluentToggleSwitch.RereadAccent;
+var
+  Before: ARGB;
+begin
+  Before := FKnownAccent;
+  InitAccentColors;
+  FKnownAccent := OnTrackFill[isNormal];
+  if FKnownAccent <> Before then
+    Invalidate;
+end;
+
 procedure TFluentToggleSwitch.CMSysColorChange(var Msg: TMessage);
 begin
   inherited;
-  if AccentColorsChanged then
-    Invalidate;
+  RereadAccent;
 end;
 
 procedure TFluentToggleSwitch.CMWinIniChange(var Msg: TMessage);
 begin
   inherited;
-  if AccentColorsChanged then
-    Invalidate;
+  RereadAccent;
 end;
 
 procedure TFluentToggleSwitch.CMEnabledChanged(var Msg: TMessage);
