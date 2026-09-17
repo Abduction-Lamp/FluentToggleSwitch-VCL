@@ -142,7 +142,6 @@ type
     procedure RereadAccent;
 
     procedure CMFontChanged(var Msg: TMessage);    message CM_FONTCHANGED;
-    procedure CMMouseEnter(var Msg: TMessage);     message CM_MOUSEENTER;
     procedure CMMouseLeave(var Msg: TMessage);     message CM_MOUSELEAVE;
     procedure CMEnabledChanged(var Msg: TMessage); message CM_ENABLEDCHANGED;
     procedure WMSetFocus(var Msg: TWMSetFocus);    message WM_SETFOCUS;
@@ -1178,13 +1177,6 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.CMMouseEnter(var Msg: TMessage);
-begin
-  inherited;
-  FHovered := True;
-  UpdateVisualState;
-end;
-
 // No press in flight means nothing to drop, and MouseUp has already settled the ones the system cancels
 procedure TFluentToggleSwitch.CancelPress;
 begin
@@ -1197,6 +1189,8 @@ begin
   SettleThumb;
 end;
 
+// MouseMove raises the hover, by the area the pointer answers for; once the pointer is gone
+// no move will come, so dropping it is left to here
 procedure TFluentToggleSwitch.CMMouseLeave(var Msg: TMessage);
 begin
   inherited;
