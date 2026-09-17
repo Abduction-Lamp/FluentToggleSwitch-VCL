@@ -39,7 +39,11 @@ type
     procedure FreeTheSender(Sender: TObject);
     function NewDoomedSwitch: TFluentToggleSwitch;
     procedure PressKey(Key: Word);
+    procedure ShowTheForm;
     procedure FocusTheSwitch;
+    function SystemAnimationsOn: Boolean;
+    function SettledSwitch(On_: Boolean): TFluentToggleSwitch;
+    procedure PumpFor(Milliseconds: Cardinal);
     function RingShows(Toggle: TFluentToggleSwitch): Boolean;
     procedure ReleaseKey(Key: Word);
     function RenderToBitmap(Toggle: TFluentToggleSwitch): TBitmap;
@@ -236,6 +240,12 @@ type
     procedure DefaultAnimationDuration_ShouldMatchWinUI;
 
     [Test]
+    procedure Animated_ShouldDecideWhetherTheThumbTravels;
+
+    [Test]
+    procedure Animation_ShouldStopWhenItArrives;
+
+    [Test]
     procedure AnimationDuration_ShouldClampToPositive;
 
     [Test]
@@ -347,6 +357,24 @@ type
 
 implementation
 
+type
+  // Counting the paints is how a test can tell a timer that stopped from one
+  // that is still asking for frames
+  TCountingSwitch = class(TFluentToggleSwitch)
+  private
+    FPaints: Integer;
+  protected
+    procedure Paint; override;
+  public
+    property Paints: Integer read FPaints write FPaints;
+  end;
+
+procedure TCountingSwitch.Paint;
+begin
+  Inc(FPaints);
+  inherited;
+end;
+
 uses
   System.SysUtils;
 
@@ -431,6 +459,11 @@ begin
     // time of their own
     FocusTheSwitch;
     RingShows(FToggle);
+    // A timer message, a pumped queue and a paint asked for by the system
+    // rather than by PaintTo are each a first time of their own
+    FToggle.AnimationDuration := 1;
+    FToggle.Checked := True;
+    PumpFor(300);
   finally
     TearDown;
   end;
@@ -520,11 +553,49 @@ end;
 // Real focus needs a window on screen, so the form goes where nobody will see
 // it. Windows keeps focus rings hidden until someone navigates by keyboard,
 // which is what the UI state message stands in for here
-procedure TToggleSwitchTest.FocusTheSwitch;
+// Animation needs a form that is showing, and the switch is no less off screen
+// for it. Focus has its own helper on top of this one
+procedure TToggleSwitchTest.ShowTheForm;
 begin
   FForm.Position := poDesigned;
   FForm.SetBounds(-4000, -4000, 200, 200);
   FForm.Show;
+end;
+
+// Windows lets people turn interface animation off, and the switch honours it,
+// so these tests say out loud what they need rather than blaming the component
+function TToggleSwitchTest.SystemAnimationsOn: Boolean;
+var
+  Allowed: BOOL;
+begin
+  if not SystemParametersInfo(SPI_GETCLIENTAREAANIMATION, 0, @Allowed, 0) then
+    Allowed := True;
+  Result := Allowed;
+end;
+
+// A switch already at rest in the state asked for, to say what arriving looks like
+function TToggleSwitchTest.SettledSwitch(On_: Boolean): TFluentToggleSwitch;
+begin
+  Result := TFluentToggleSwitch.Create(FForm);
+  Result.Parent := FForm;
+  Result.ScaleForPPI(DesignPPI);
+  Result.ShowFocus := False;
+  Result.Animated := False;
+  Result.Checked := On_;
+end;
+
+procedure TToggleSwitchTest.PumpFor(Milliseconds: Cardinal);
+var
+  Deadline: Cardinal;
+begin
+  Deadline := GetTickCount + Milliseconds;
+  while GetTickCount < Deadline do
+    Application.ProcessMessages;
+end;
+
+procedure TToggleSwitchTest.FocusTheSwitch;
+begin
+  ShowTheForm;
   FToggle.SetFocus;
   FForm.Perform(WM_CHANGEUISTATE, MakeWParam(UIS_CLEAR, UISF_HIDEFOCUS), 0);
 end;
@@ -1284,6 +1355,82 @@ end;
 procedure TToggleSwitchTest.DefaultAnimationDuration_ShouldMatchWinUI;
 begin
   Assert.AreEqual(367, FToggle.AnimationDuration, 'Thumb slide lasts as long as in WinUI');
+end;
+
+// The whole of what Animated promises, in one pass. Nothing here waits on a
+// clock: the thumb sits out a 33 ms delay before it moves at all, and painting
+// a bitmap pumps no messages, so the render right after the toggle is the
+// first frame of the animation whatever the machine is doing
+procedure TToggleSwitchTest.Animated_ShouldDecideWhetherTheThumbTravels;
+var
+  Arrived, Moving, Snapped: TBitmap;
+  Settled: TFluentToggleSwitch;
+begin
+  Assert.IsTrue(SystemAnimationsOn,
+    'These tests need interface animation left on in Windows');
+  ShowTheForm;
+  FToggle.ShowFocus := False;
+
+  Arrived := nil;
+  Moving := nil;
+  Snapped := nil;
+  try
+    // Freed here rather than with the form: the leak monitor closes its books
+    // around the test, not around the teardown
+    Settled := SettledSwitch(True);
+    try
+      Arrived := RenderToBitmap(Settled);
+    finally
+      Settled.Free;
+    end;
+
+    FToggle.AnimationDuration := 5000;
+    FToggle.Checked := True;
+    Moving := RenderToBitmap(FToggle);
+    Assert.IsTrue(DescribeDifference(Arrived, Moving) <> '',
+      'An animated switch has not arrived the instant it is told to go');
+
+    FToggle.Checked := False;
+    FToggle.Animated := False;
+    FToggle.Checked := True;
+    Snapped := RenderToBitmap(FToggle);
+    Assert.AreEqual('', DescribeDifference(Arrived, Snapped),
+      'and one that does not animate is there already');
+  finally
+    Snapped.Free;
+    Moving.Free;
+    Arrived.Free;
+  end;
+end;
+
+// The timer lives on the window of the switch and nothing else turns it off,
+// so a slide that ended without stopping it would ask for sixty frames a
+// second for as long as the program runs
+procedure TToggleSwitchTest.Animation_ShouldStopWhenItArrives;
+var
+  Switch: TCountingSwitch;
+begin
+  Assert.IsTrue(SystemAnimationsOn,
+    'These tests need interface animation left on in Windows');
+  ShowTheForm;
+
+  Switch := TCountingSwitch.Create(FForm);
+  Switch.Parent := FForm;
+  Switch.ScaleForPPI(DesignPPI);
+  Switch.ShowFocus := False;
+  // The thumb waits 33 ms and then slides for this long, and the colours
+  // cross-fade over 83, so half a second sees all of it out
+  Switch.AnimationDuration := 1;
+  Switch.Checked := True;
+  PumpFor(500);
+
+  Switch.Paints := 0;
+  PumpFor(200);
+  try
+    Assert.AreEqual(0, Switch.Paints, 'A finished animation leaves no timer behind');
+  finally
+    Switch.Free;
+  end;
 end;
 
 procedure TToggleSwitchTest.AnimationDuration_ShouldClampToPositive;
