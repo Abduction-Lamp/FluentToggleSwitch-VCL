@@ -83,6 +83,7 @@ type
     FTextSpacing: Integer;
     FTextWidth: Integer;
     FTextHeight: Integer;
+    FTextAscent: Integer;
     FShowHeader: Boolean;
     FHeaderText: string;
     FHeaderPosition: TFluentHeaderPosition;
@@ -170,6 +171,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    function TextBaseline: Integer;
 
   published
     property Align;
@@ -673,6 +675,7 @@ var
 begin
   FTextWidth := 0;
   FTextHeight := 0;
+  FTextAscent := 0;
   FHeaderWidth := 0;
   FHeaderHeight := 0;
 
@@ -690,6 +693,7 @@ begin
       GetTextExtentPoint32(DC, PChar(FTextOff), Length(FTextOff), SizeOff);
       FTextWidth := Max(SizeOn.cx, SizeOff.cx);
       FTextHeight := TM.tmHeight;
+      FTextAscent := TM.tmAscent;
     end;
 
     if FShowHeader then
@@ -792,6 +796,15 @@ begin
   end;
   Result.Left := SwitchIndent;
   Result.Right := Result.Left + BlockWidth;
+end;
+
+// Where Paint puts the text, so the form designer lines the label up with the captions beside it
+function TFluentToggleSwitch.TextBaseline: Integer;
+var
+  Area: TRect;
+begin
+  Area := SwitchArea;
+  Result := Area.Top + (Area.Height - FTextHeight) div 2 + FTextAscent;
 end;
 
 procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
