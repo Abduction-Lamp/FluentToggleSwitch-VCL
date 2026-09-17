@@ -47,7 +47,7 @@ end;
 function TFluentToggleSwitchGuidelines.GetDesignerGuideOffset(Index: Integer): Integer;
 begin
   if Index >= inherited GetCount then
-    Result := GetTextBaseline(TControl(Component), tlCenter)
+    Result := TFluentToggleSwitch(Component).TextBaseline
   else
     Result := inherited GetDesignerGuideOffset(Index);
 end;
