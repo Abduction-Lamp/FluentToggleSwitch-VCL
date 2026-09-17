@@ -5,6 +5,7 @@ interface
 uses
   System.Classes,
   System.Math,
+  System.Types,
 
   Vcl.Controls,
   Vcl.Graphics,
