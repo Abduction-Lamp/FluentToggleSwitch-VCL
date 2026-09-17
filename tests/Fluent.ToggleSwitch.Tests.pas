@@ -36,6 +36,7 @@ type
     procedure ReleaseAt(X, Y: Integer);
     procedure HandleDblClick(Sender: TObject);
     procedure FreeTheSender(Sender: TObject);
+    function NewDoomedSwitch: TFluentToggleSwitch;
     procedure PressKey(Key: Word);
     procedure FocusTheSwitch;
     function RingShows(Toggle: TFluentToggleSwitch): Boolean;
@@ -126,6 +127,12 @@ type
     procedure Freed_InOnChange_ShouldNotComeBackTo;
 
     [Test]
+    procedure Freed_InOnClick_ShouldNotComeBackTo;
+
+    [Test]
+    procedure Freed_InOnClick_BySpace_ShouldNotComeBackTo;
+
+    [Test]
     procedure Release_OffTheSwitch_ShouldLeaveNothingBehind;
 
     [Test]
@@ -199,6 +206,12 @@ type
 
     [Test]
     procedure CancelMode_MidPress_ShouldNotToggle;
+
+    [Test]
+    procedure CancelMode_MidDrag_ShouldNotToggle;
+
+    [Test]
+    procedure CaptureLost_MidDrag_ShouldDropThePress;
 
     [Test]
     procedure ParentColor_ShouldBeTrueByDefault;
@@ -369,9 +382,11 @@ begin
     // Streaming a whole form brings up the class registry entry and the
     // reader's path for creating children
     StreamFormWithSwitch(Tmp, Width).Free;
-    // The first keyboard message has bookkeeping of its own
+    // The first keyboard message has bookkeeping of its own, and so does the
+    // first time the pointer leaves
     PressKey(VK_SPACE);
     ReleaseKey(VK_SPACE);
+    FToggle.Perform(CM_MOUSELEAVE, 0, 0);
     // A window on screen, real focus and a rendering of both are each a first
     // time of their own
     FocusTheSwitch;
@@ -738,6 +753,15 @@ begin
   TFluentToggleSwitch(Sender).Free;
 end;
 
+// A switch the test can hand to FreeTheSender without leaving the fixture
+// holding a pointer to freed memory
+function TToggleSwitchTest.NewDoomedSwitch: TFluentToggleSwitch;
+begin
+  Result := TFluentToggleSwitch.Create(FForm);
+  Result.Parent := FForm;
+  Result.ScaleForPPI(DesignPPI);
+end;
+
 procedure TToggleSwitchTest.HandleOnClick(Sender: TObject);
 begin
   Inc(FOnClickCount);
@@ -811,9 +835,7 @@ procedure TToggleSwitchTest.Freed_InOnChange_ShouldNotComeBackTo;
 var
   Doomed: TFluentToggleSwitch;
 begin
-  Doomed := TFluentToggleSwitch.Create(FForm);
-  Doomed.Parent := FForm;
-  Doomed.ScaleForPPI(DesignPPI);
+  Doomed := NewDoomedSwitch;
   Doomed.OnChange := FreeTheSender;
   Assert.WillNotRaise(
     procedure
@@ -827,6 +849,40 @@ end;
 
 // The header is not part of the switch, so letting go there is not a click and
 // must not leave the thumb or the colour half way
+// Toggle reports the click after it has moved the value, so OnClick is the
+// second door a handler can free the switch through
+procedure TToggleSwitchTest.Freed_InOnClick_ShouldNotComeBackTo;
+var
+  Doomed: TFluentToggleSwitch;
+begin
+  Doomed := NewDoomedSwitch;
+  Doomed.OnClick := FreeTheSender;
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Doomed.Perform(WM_LBUTTONDOWN, MK_LBUTTON,
+        MakeLParam(Word(ThumbOffX), Word(Doomed.Height div 2)));
+      Doomed.Perform(WM_LBUTTONUP, 0,
+        MakeLParam(Word(ThumbOffX), Word(Doomed.Height div 2)));
+    end, nil, 'The switch survives being freed from the click it reported');
+end;
+
+// And the keyboard is the third: KeyUp calls Toggle as its last statement
+// precisely so that there is nothing left to come back to
+procedure TToggleSwitchTest.Freed_InOnClick_BySpace_ShouldNotComeBackTo;
+var
+  Doomed: TFluentToggleSwitch;
+begin
+  Doomed := NewDoomedSwitch;
+  Doomed.OnClick := FreeTheSender;
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Doomed.Perform(WM_KEYDOWN, VK_SPACE, 0);
+      Doomed.Perform(WM_KEYUP, VK_SPACE, 0);
+    end, nil, 'and survives being freed from a click the keyboard reported');
+end;
+
 procedure TToggleSwitchTest.Release_OffTheSwitch_ShouldLeaveNothingBehind;
 var
   Clean, After: TBitmap;
@@ -1193,6 +1249,47 @@ begin
       for I := 1 to 50 do
         CreateRenderDestroy;
     end, nil, 'Fifty lifetimes run clean');
+end;
+
+// The press alone is a weak cancel to test: the button up VCL synthesises
+// carries (-1, -1), which misses the switch anyway. A drag past the middle is
+// what the release logic would act on if the cancel arrived too late
+procedure TToggleSwitchTest.CancelMode_MidDrag_ShouldNotToggle;
+var
+  Untouched, Cancelled: TBitmap;
+begin
+  FToggle.OnChange := HandleOnChange;
+  Untouched := RenderToBitmap(FToggle);
+  Cancelled := nil;
+  try
+    Press(ThumbOffX);
+    MoveTo(ThumbOnX);
+    FToggle.Perform(WM_CANCELMODE, 0, 0);
+    // The pointer is still over the switch, and hover has a look of its own
+    FToggle.Perform(CM_MOUSELEAVE, 0, 0);
+    Assert.IsFalse(FToggle.Checked, 'A gesture the system takes back is no toggle');
+    Assert.IsFalse(FOnChangeFired, 'and fires nothing');
+    Cancelled := RenderToBitmap(FToggle);
+    Assert.AreEqual('', DescribeDifference(Untouched, Cancelled),
+      'and leaves the thumb where it found it');
+  finally
+    Cancelled.Free;
+    Untouched.Free;
+  end;
+end;
+
+// A capture taken by another window is announced to nobody, so the switch has
+// to notice on the next move that the gesture is no longer its own
+procedure TToggleSwitchTest.CaptureLost_MidDrag_ShouldDropThePress;
+begin
+  FToggle.OnChange := HandleOnChange;
+  Press(ThumbOffX);
+  MoveTo(ThumbOffX + DragTravel div 2 + 1);
+  SetCaptureControl(nil);
+  MoveTo(ThumbOnX);
+  Release(ThumbOnX);
+  Assert.IsFalse(FToggle.Checked, 'A drag that lost the capture carries on without the switch');
+  Assert.IsFalse(FOnChangeFired, 'and fires nothing');
 end;
 
 procedure TToggleSwitchTest.ParentColor_ShouldBeTrueByDefault;
