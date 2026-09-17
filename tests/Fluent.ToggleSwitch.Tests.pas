@@ -1259,6 +1259,9 @@ var
   Untouched, Cancelled: TBitmap;
 begin
   FToggle.OnChange := HandleOnChange;
+  // Pressing hands the switch the focus, and this runner leaves focus cues on,
+  // so the ring would answer for the difference the thumb is asked about
+  FToggle.ShowFocus := False;
   Untouched := RenderToBitmap(FToggle);
   Cancelled := nil;
   try
