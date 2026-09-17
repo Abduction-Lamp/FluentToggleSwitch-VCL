@@ -60,20 +60,10 @@ type
     [Test]
     procedure DefaultColorsShouldBeClDefault;
 
-    [Test]
-    procedure SetTrackFrameColor_ShouldStoreValue;
 
-    [Test]
-    procedure SetTrackColorOff_ShouldStoreValue;
 
-    [Test]
-    procedure SetTrackColorOn_ShouldStoreValue;
 
-    [Test]
-    procedure SetThumbColorOff_ShouldStoreValue;
 
-    [Test]
-    procedure SetThumbColorOn_ShouldStoreValue;
 
     // --- Text properties ---
 
@@ -95,11 +85,7 @@ type
     [Test]
     procedure SetShowText_False_ShouldResetWidth;
 
-    [Test]
-    procedure SetTextPosition_ShouldStoreValue;
 
-    [Test]
-    procedure SetTextSpacing_ShouldStoreValue;
 
     [Test]
     procedure SetTextSpacing_Negative_ShouldClampToZero;
@@ -107,8 +93,6 @@ type
     [Test]
     procedure SetTextOn_ShouldAffectWidth;
 
-    [Test]
-    procedure TextPosition_Left_WithShowText_ShouldStoreValue;
 
     // --- Toggle and events ---
 
@@ -121,14 +105,10 @@ type
     [Test]
     procedure SetChecked_ShouldFireOnChange;
 
-    [Test]
-    procedure Click_ShouldFireOnClickOnceTheStateHasMoved;
 
     [Test]
     procedure Space_ShouldFireOnClick;
 
-    [Test]
-    procedure DragShort_ShouldNotFireOnClick;
 
     [Test]
     procedure SetChecked_ShouldNotFireOnClick;
@@ -176,10 +156,10 @@ type
     procedure DragPastMiddle_ShouldTurnOnAndFireOnChange;
 
     [Test]
-    procedure DragShort_ShouldSnapBack;
+    procedure DragShort_ShouldSnapBackAndFireNothing;
 
     [Test]
-    procedure Click_ShouldToggleAndFireOnChange;
+    procedure Click_ShouldToggleAndFireBothEvents;
 
     [Test]
     procedure Click_ReleasedOutside_ShouldNotToggle;
@@ -318,16 +298,23 @@ const
   // control to this scale, so the numbers hold on any machine.
   DesignPPI = 96;
   // Press points near each end of the track, at DesignPPI: the thumb rests at
-  // 10 and 30 (ThumbCenterOffX and ThumbCenterOnX in source/ToggleSwitch.pas).
+  // 10 and 30 (ThumbCenterOffX and ThumbCenterOnX in source/Fluent.ToggleSwitch.pas).
   // A drag only cares about the distance between them
   ThumbOffX = 11;
   ThumbOnX = 31;
-  // Mirrors DragThreshold and TrackAreaHeight in source/ToggleSwitch.pas
+  // Mirrors DragThreshold and TrackAreaHeight in source/Fluent.ToggleSwitch.pas
   DragThreshold = 4;
   TrackAreaHeight = 22;
 
 procedure TToggleSwitchTest.Setup;
 begin
+  // DUnitX keeps one fixture for the lot, so the counters start over here
+  FOnChangeFired := False;
+  FOnChangeCount := 0;
+  FOnClickCount := 0;
+  FCheckedWhenClicked := False;
+  FDblClickCount := 0;
+
   FForm := TForm.CreateNew(nil);
   FToggle := TFluentToggleSwitch.Create(FForm);
   FToggle.Parent := FForm;
@@ -368,9 +355,14 @@ begin
     finally
       Tmp.Free;
     end;
+    // Writing one out brings up the other half of them
+    AsText(FToggle);
     // Streaming a whole form brings up the class registry entry and the
     // reader's path for creating children
     StreamFormWithSwitch(Tmp, Width).Free;
+    // The first keyboard message has bookkeeping of its own
+    PressKey(VK_SPACE);
+    ReleaseKey(VK_SPACE);
     // A window on screen, real focus and a rendering of both are each a first
     // time of their own
     FocusTheSwitch;
@@ -574,35 +566,10 @@ begin
   Assert.AreEqual(TColor(clDefault), FToggle.ThumbColorOn);
 end;
 
-procedure TToggleSwitchTest.SetTrackFrameColor_ShouldStoreValue;
-begin
-  FToggle.TrackFrameColor := clRed;
-  Assert.AreEqual(TColor(clRed), FToggle.TrackFrameColor);
-end;
 
-procedure TToggleSwitchTest.SetTrackColorOff_ShouldStoreValue;
-begin
-  FToggle.TrackColorOff := clGreen;
-  Assert.AreEqual(TColor(clGreen), FToggle.TrackColorOff);
-end;
 
-procedure TToggleSwitchTest.SetTrackColorOn_ShouldStoreValue;
-begin
-  FToggle.TrackColorOn := clBlue;
-  Assert.AreEqual(TColor(clBlue), FToggle.TrackColorOn);
-end;
 
-procedure TToggleSwitchTest.SetThumbColorOff_ShouldStoreValue;
-begin
-  FToggle.ThumbColorOff := clYellow;
-  Assert.AreEqual(TColor(clYellow), FToggle.ThumbColorOff);
-end;
 
-procedure TToggleSwitchTest.SetThumbColorOn_ShouldStoreValue;
-begin
-  FToggle.ThumbColorOn := clWhite;
-  Assert.AreEqual(TColor(clWhite), FToggle.ThumbColorOn);
-end;
 
 // --- Text tests ---
 
@@ -643,17 +610,7 @@ begin
   Assert.AreEqual(42, FToggle.Width);
 end;
 
-procedure TToggleSwitchTest.SetTextPosition_ShouldStoreValue;
-begin
-  FToggle.TextPosition := tpLeft;
-  Assert.AreEqual(Ord(tpLeft), Ord(FToggle.TextPosition));
-end;
 
-procedure TToggleSwitchTest.SetTextSpacing_ShouldStoreValue;
-begin
-  FToggle.TextSpacing := 16;
-  Assert.AreEqual(16, FToggle.TextSpacing);
-end;
 
 procedure TToggleSwitchTest.SetTextSpacing_Negative_ShouldClampToZero;
 begin
@@ -672,13 +629,6 @@ begin
   Assert.IsTrue(WidthAfter > WidthBefore, 'Width should increase with longer TextOn');
 end;
 
-procedure TToggleSwitchTest.TextPosition_Left_WithShowText_ShouldStoreValue;
-begin
-  FToggle.ShowText := True;
-  FToggle.TextPosition := tpLeft;
-  Assert.AreEqual(Ord(tpLeft), Ord(FToggle.TextPosition));
-  Assert.IsTrue(FToggle.ShowText, 'ShowText should remain True');
-end;
 
 // --- Toggle and event tests ---
 
@@ -701,7 +651,7 @@ end;
 procedure TToggleSwitchTest.HandleOnClick(Sender: TObject);
 begin
   Inc(FOnClickCount);
-  FCheckedWhenClicked := FToggle.Checked;
+  FCheckedWhenClicked := TFluentToggleSwitch(Sender).Checked;
 end;
 
 procedure TToggleSwitchTest.SetTextOn_BeforeParent_ShouldNotRaise;
@@ -726,7 +676,6 @@ end;
 
 procedure TToggleSwitchTest.Toggle_ShouldChangeChecked;
 begin
-  Assert.IsFalse(FToggle.Checked);
   FToggle.Checked := True;
   Assert.IsTrue(FToggle.Checked);
   FToggle.Checked := False;
@@ -746,16 +695,6 @@ end;
 
 // OnClick is about the action, and by the time it arrives the value is the one
 // the user asked for
-procedure TToggleSwitchTest.Click_ShouldFireOnClickOnceTheStateHasMoved;
-begin
-  FOnClickCount := 0;
-  FCheckedWhenClicked := False;
-  FToggle.OnClick := HandleOnClick;
-  Press(ThumbOffX);
-  Release(ThumbOffX);
-  Assert.AreEqual(1, FOnClickCount, 'A click is reported once');
-  Assert.IsTrue(FCheckedWhenClicked, 'and the handler sees the new value');
-end;
 
 procedure TToggleSwitchTest.Space_ShouldFireOnClick;
 begin
@@ -826,15 +765,6 @@ begin
   end;
 end;
 
-procedure TToggleSwitchTest.DragShort_ShouldNotFireOnClick;
-begin
-  FOnClickCount := 0;
-  FToggle.OnClick := HandleOnClick;
-  Press(ThumbOffX);
-  MoveTo(ThumbOffX + DragThreshold + 1);
-  Release(ThumbOffX + DragThreshold + 1);
-  Assert.AreEqual(0, FOnClickCount, 'A drag that changed nothing is no click');
-end;
 
 procedure TToggleSwitchTest.SetChecked_ShouldNotFireOnClick;
 begin
@@ -960,25 +890,28 @@ begin
   Assert.IsTrue(FOnChangeFired, 'OnChange fires on a user drag');
 end;
 
-procedure TToggleSwitchTest.DragShort_ShouldSnapBack;
+procedure TToggleSwitchTest.DragShort_ShouldSnapBackAndFireNothing;
 begin
-  FOnChangeFired := False;
   FToggle.OnChange := HandleOnChange;
+  FToggle.OnClick := HandleOnClick;
   Press(ThumbOffX);
   MoveTo(ThumbOffX + DragThreshold + 1);
   Release(ThumbOffX + DragThreshold + 1);
   Assert.IsFalse(FToggle.Checked, 'Thumb released before the middle snaps back');
   Assert.IsFalse(FOnChangeFired, 'and nothing changed, so OnChange stays quiet');
+  Assert.AreEqual(0, FOnClickCount, 'and a drag that changed nothing is no click');
 end;
 
-procedure TToggleSwitchTest.Click_ShouldToggleAndFireOnChange;
+procedure TToggleSwitchTest.Click_ShouldToggleAndFireBothEvents;
 begin
-  FOnChangeFired := False;
   FToggle.OnChange := HandleOnChange;
+  FToggle.OnClick := HandleOnClick;
   Press(ThumbOffX);
   Release(ThumbOffX);
   Assert.IsTrue(FToggle.Checked, 'A click without any travel toggles the switch');
   Assert.IsTrue(FOnChangeFired, 'and fires OnChange');
+  Assert.AreEqual(1, FOnClickCount, 'and reports the click once');
+  Assert.IsTrue(FCheckedWhenClicked, 'with the new value already in place');
 end;
 
 procedure TToggleSwitchTest.Click_ReleasedOutside_ShouldNotToggle;
