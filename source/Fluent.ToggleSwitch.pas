@@ -47,7 +47,6 @@ type
     FGone: PBoolean;
     FReportingClick: Boolean;
     FLeftIndent: Integer;
-    FFocusVisible: Boolean;
     FKeyboardToggle: Boolean;
     FDragStartX: Integer;
     FDragDelta: Single;
@@ -110,7 +109,7 @@ type
     function StateVisual(S: TFluentInteractionState): TFluentVisualState;
     function CurrentVisual: TFluentVisualState;
     procedure UpdateVisualState;
-    procedure Toggle;
+    function Toggle: Boolean;
     procedure SetTrackFrameColor(Value: TColor);
     procedure SetTrackColorOff(Value: TColor);
     procedure SetTrackColorOn(Value: TColor);
@@ -122,7 +121,7 @@ type
     function IsTextOffStored: Boolean;
     procedure SetShowText(Value: Boolean);
     procedure SetShowFocus(Value: Boolean);
-    procedure UpdateFocusVisibility;
+    function FocusRingWanted: Boolean;
     procedure SetTextPosition(Value: TFluentTextPosition);
     procedure SetTextSpacing(Value: Integer);
     procedure SetShowHeader(Value: Boolean);
@@ -518,17 +517,11 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.UpdateFocusVisibility;
-var
-  Visible: Boolean;
+// Windows hides focus rings until someone reaches for the keyboard, and says so
+// through the UI state of the window
+function TFluentToggleSwitch.FocusRingWanted: Boolean;
 begin
-  Visible := HandleAllocated and (Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEFOCUS = 0);
-  if Visible <> FFocusVisible then
-  begin
-    FFocusVisible := Visible;
-    if Focused then
-      Invalidate;
-  end;
+  Result := FShowFocus and Focused and (Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEFOCUS = 0);
 end;
 
 procedure TFluentToggleSwitch.SetShowText(Value: Boolean);
@@ -1030,7 +1023,9 @@ begin
   FAnimationDuration := Value;
 end;
 
-procedure TFluentToggleSwitch.Toggle;
+// Either event may free the switch, so a local on this stack frame keeps watch.
+// False says there is no switch left to come back to, and whoever nested us hears it too
+function TFluentToggleSwitch.Toggle: Boolean;
 var
   Gone: Boolean;
   Outer: PBoolean;
@@ -1046,6 +1041,7 @@ begin
     Click;
   end;
 
+  Result := not Gone;
   if Gone then
   begin
     if Outer <> nil then
@@ -1079,37 +1075,32 @@ end;
 
 procedure TFluentToggleSwitch.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
-  Gone: Boolean;
+  Flip: Boolean;
 begin
   if (Button = mbLeft) and FPressed then
   begin
-    Gone := False;
-    FGone := @Gone;
-    try
-      FPressed := False;
-      UpdateVisualState;
-      if FDragged then
-      begin
-        FAnimProgress := FAnimProgress + FDragDelta / DragTravel;
-        FDragDelta := 0;
-        if (FAnimProgress >= 0.5) <> FChecked then
-          Toggle
-        else
-          SettleThumb;
-      end else begin
-        FDragDelta := 0;
-        if PtInRect(SwitchArea, Point(X, Y)) then
-          Toggle
-        else
-          SettleThumb;
-      end;
-    finally
-      if not Gone then
-        FGone := nil;
-    end;
+    FPressed := False;
+    UpdateVisualState;
 
-    if Gone then
-      Exit;
+    if FDragged then
+    begin
+      // The thumb settles into the state on its side of the track
+      FAnimProgress := FAnimProgress + FDragDelta / DragTravel;
+      Flip := (FAnimProgress >= 0.5) <> FChecked;
+    end
+    else
+      Flip := PtInRect(SwitchArea, Point(X, Y));
+
+    // A click can nudge the thumb without reaching the drag threshold
+    FDragDelta := 0;
+
+    if Flip then
+    begin
+      if not Toggle then
+        Exit;
+    end
+    else
+      SettleThumb;
 
     Invalidate;
   end;
@@ -1165,6 +1156,7 @@ begin
     Key := 0;
     FKeyPressed := False;
     UpdateVisualState;
+    // Last statement on purpose: a handler is free to free the switch
     Toggle;
   end;
 end;
@@ -1233,7 +1225,6 @@ end;
 procedure TFluentToggleSwitch.WMSetFocus(var Msg: TWMSetFocus);
 begin
   inherited;
-  UpdateFocusVisibility;
   Invalidate;
 end;
 
@@ -1259,7 +1250,9 @@ end;
 procedure TFluentToggleSwitch.WMUpdateUIState(var Msg: TMessage);
 begin
   inherited;
-  UpdateFocusVisibility;
+  // The ring may have just been shown or hidden for the whole window
+  if Focused then
+    Invalidate;
 end;
 
 // Each instance keeps its own baseline, because OnTrackFill is shared and a sibling may have refreshed it first
@@ -1533,7 +1526,7 @@ begin
     end;
   end;
 
-  if FShowFocus and FFocusVisible and Focused then
+  if FocusRingWanted then
   begin
     Canvas.Brush.Style := bsSolid;
     Canvas.DrawFocusRect(Area);
