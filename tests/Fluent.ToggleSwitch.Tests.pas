@@ -42,8 +42,11 @@ type
     procedure ReleaseKey(Key: Word);
     function RenderToBitmap(Toggle: TFluentToggleSwitch): TBitmap;
     function DescribeDifference(A, B: TBitmap; FromY: Integer = 0): string;
-    procedure DifferingColumns(A, B: TBitmap; out First, Last: Integer);
+    procedure DifferingColumns(A, B: TBitmap; out First, Last: Integer; FromY: Integer = 0);
     function LineHeight(Font: TFont): Integer;
+    function LineWidth(Font: TFont; const S: string): Integer;
+    function CaptionWidth: Integer;
+    function TextGap: Integer;
     function TrackLeftOnForm: Integer;
     procedure CopyThroughStream(Source, Target: TFluentToggleSwitch);
     function StreamFormWithSwitch(out Loaded: TFluentToggleSwitch;
@@ -144,7 +147,7 @@ type
     procedure TabStop_ShouldBeTrueByDefault;
 
     [Test]
-    procedure ShowFocus_ShouldBeTrueByDefault;
+    procedure FocusAndKeyboard_ShouldBeOnByDefault;
 
     [Test]
     procedure Focused_ShouldDrawTheRing;
@@ -307,6 +310,10 @@ const
   DragThreshold = 4;
   TrackAreaWidth = 42;
   TrackAreaHeight = 22;
+  TrackWidth = 40;
+  // How far the thumb travels between its two rest positions while pressed,
+  // ThumbCenterOnX - ThumbCenterOffX. Half of it is where the switch flips
+  DragTravel = 17;
 
 procedure TToggleSwitchTest.Setup;
 begin
@@ -521,7 +528,7 @@ end;
 // The columns two renders differ in. First comes back as -1 when they match.
 // Saying where the difference is, and not merely that there is one, is what
 // tells a focus ring apart from a ring drawn over the track outline
-procedure TToggleSwitchTest.DifferingColumns(A, B: TBitmap; out First, Last: Integer);
+procedure TToggleSwitchTest.DifferingColumns(A, B: TBitmap; out First, Last: Integer; FromY: Integer = 0);
 type
   PRow = ^TRow;
   TRow = array[0..MaxInt div SizeOf(Cardinal) - 1] of Cardinal;
@@ -533,7 +540,7 @@ var
 begin
   First := -1;
   Last := -1;
-  for Y := 0 to A.Height - 1 do
+  for Y := FromY to A.Height - 1 do
   begin
     RowA := A.ScanLine[Y];
     RowB := B.ScanLine[Y];
@@ -563,6 +570,38 @@ begin
   finally
     Bmp.Free;
   end;
+end;
+
+function TToggleSwitchTest.LineWidth(Font: TFont; const S: string): Integer;
+var
+  Bmp: TBitmap;
+begin
+  Bmp := TBitmap.Create;
+  try
+    Bmp.Canvas.Font := Font;
+    Result := Bmp.Canvas.TextWidth(S);
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// The switch sizes itself to the wider of its two captions, so that it does
+// not change width when it is toggled
+function TToggleSwitchTest.CaptionWidth: Integer;
+var
+  Off: Integer;
+begin
+  Result := LineWidth(FToggle.Font, FToggle.TextOn);
+  Off := LineWidth(FToggle.Font, FToggle.TextOff);
+  if Off > Result then
+    Result := Off;
+end;
+
+// TextSpacing is measured from the track outline, and the area the switch
+// occupies is a pixel wider than the track on each side
+function TToggleSwitchTest.TextGap: Integer;
+begin
+  Result := FToggle.TextSpacing - (TrackAreaWidth - TrackWidth) div 2;
 end;
 
 function TToggleSwitchTest.DescribeDifference(A, B: TBitmap; FromY: Integer = 0): string;
@@ -651,12 +690,10 @@ begin
 end;
 
 procedure TToggleSwitchTest.SetShowText_True_ShouldIncreaseWidth;
-var
-  WidthBefore: Integer;
 begin
-  WidthBefore := FToggle.Width;
   FToggle.ShowText := True;
-  Assert.IsTrue(FToggle.Width > WidthBefore, 'Width should increase when ShowText is True');
+  Assert.AreEqual(TrackAreaWidth + TextGap + CaptionWidth, FToggle.Width,
+    'The caption adds its own width and the gap before it, and nothing else');
 end;
 
 procedure TToggleSwitchTest.SetShowText_False_ShouldResetWidth;
@@ -675,14 +712,11 @@ begin
 end;
 
 procedure TToggleSwitchTest.SetTextOn_ShouldAffectWidth;
-var
-  WidthBefore, WidthAfter: Integer;
 begin
   FToggle.ShowText := True;
-  WidthBefore := FToggle.Width;
   FToggle.TextOn := 'Long text value for testing';
-  WidthAfter := FToggle.Width;
-  Assert.IsTrue(WidthAfter > WidthBefore, 'Width should increase with longer TextOn');
+  Assert.AreEqual(TrackAreaWidth + TextGap + CaptionWidth, FToggle.Width,
+    'The longer of the two captions is what the switch makes room for');
 end;
 
 
@@ -891,7 +925,7 @@ begin
   Assert.IsTrue(FToggle.TabStop, 'Tab reaches the switch like any other control');
 end;
 
-procedure TToggleSwitchTest.ShowFocus_ShouldBeTrueByDefault;
+procedure TToggleSwitchTest.FocusAndKeyboard_ShouldBeOnByDefault;
 begin
   Assert.IsTrue(FToggle.ShowFocus, 'The switch is allowed to show a focus ring');
   Assert.IsTrue(FToggle.KeyboardToggle, 'and answers the keyboard');
@@ -954,9 +988,10 @@ procedure TToggleSwitchTest.DragPastMiddle_ShouldTurnOnAndFireOnChange;
 begin
   FOnChangeFired := False;
   FToggle.OnChange := HandleOnChange;
+  // One pixel past half the travel: the least a drag needs to turn it on
   Press(ThumbOffX);
-  MoveTo(ThumbOnX);
-  Release(ThumbOnX);
+  MoveTo(ThumbOffX + DragTravel div 2 + 1);
+  Release(ThumbOffX + DragTravel div 2 + 1);
   Assert.IsTrue(FToggle.Checked, 'Thumb released past the middle turns the switch on');
   Assert.IsTrue(FOnChangeFired, 'OnChange fires on a user drag');
 end;
@@ -965,9 +1000,10 @@ procedure TToggleSwitchTest.DragShort_ShouldSnapBackAndFireNothing;
 begin
   FToggle.OnChange := HandleOnChange;
   FToggle.OnClick := HandleOnClick;
+  // One pixel short of half the travel: the nearest a drag gets to turning it on
   Press(ThumbOffX);
-  MoveTo(ThumbOffX + DragThreshold + 1);
-  Release(ThumbOffX + DragThreshold + 1);
+  MoveTo(ThumbOffX + DragTravel div 2);
+  Release(ThumbOffX + DragTravel div 2);
   Assert.IsFalse(FToggle.Checked, 'Thumb released before the middle snaps back');
   Assert.IsFalse(FOnChangeFired, 'and nothing changed, so OnChange stays quiet');
   Assert.AreEqual(0, FOnClickCount, 'and a drag that changed nothing is no click');
@@ -999,19 +1035,23 @@ end;
 // decides, and the thumb is held inside the track wherever the pointer went
 procedure TToggleSwitchTest.DragPastMiddle_ReleasedOutside_ShouldStillToggle;
 begin
+  FToggle.OnChange := HandleOnChange;
   Press(ThumbOffX);
   MoveTo(FToggle.Width + 50);
   Release(FToggle.Width + 50);
   Assert.IsTrue(FToggle.Checked, 'The thumb reached the far end, so the switch turns on');
+  Assert.IsTrue(FOnChangeFired, 'and says so');
 end;
 
 procedure TToggleSwitchTest.DragAwayFromTravel_ShouldNotToggle;
 begin
+  FToggle.OnChange := HandleOnChange;
   Press(ThumbOffX);
   // An off switch has no room to the left, so the thumb never moves
   MoveTo(-50);
   Release(-50);
   Assert.IsFalse(FToggle.Checked, 'A drag the thumb cannot follow changes nothing');
+  Assert.IsFalse(FOnChangeFired, 'and stays quiet about it');
 end;
 
 procedure TToggleSwitchTest.Click_OnLabel_ShouldToggle;
@@ -1044,8 +1084,8 @@ begin
   FOnChangeFired := False;
   FToggle.OnChange := HandleOnChange;
   Press(ThumbOnX);
-  MoveTo(ThumbOffX);
-  Release(ThumbOffX);
+  MoveTo(ThumbOnX - DragTravel div 2 - 1);
+  Release(ThumbOnX - DragTravel div 2 - 1);
   Assert.IsFalse(FToggle.Checked, 'Thumb dragged back past the middle turns the switch off');
   Assert.IsTrue(FOnChangeFired, 'and fires OnChange');
 end;
@@ -1127,6 +1167,8 @@ procedure TToggleSwitchTest.AnimationDuration_ShouldClampToPositive;
 begin
   FToggle.AnimationDuration := 0;
   Assert.AreEqual(1, FToggle.AnimationDuration, 'Duration never drops below 1 ms');
+  FToggle.AnimationDuration := -100;
+  Assert.AreEqual(1, FToggle.AnimationDuration, 'however far below it is asked to go');
 end;
 
 procedure TToggleSwitchTest.Paint_ShouldNotChangeSize;
@@ -1167,7 +1209,7 @@ end;
 
 procedure TToggleSwitchTest.Scale_96_ShouldUseTheDesignSize;
 begin
-  FToggle.ScaleForPPI(96);
+  // Setup pins the scale, so this is the size the design numbers ask for
   Assert.AreEqual(42, FToggle.Width);
   Assert.AreEqual(22, FToggle.Height);
 end;
@@ -1215,7 +1257,6 @@ end;
 
 procedure TToggleSwitchTest.AutoSize_True_ShouldMeasureAgain;
 begin
-  FToggle.ScaleForPPI(96);
   FToggle.AutoSize := False;
   FToggle.SetBounds(0, 0, 100, 50);
   FToggle.AutoSize := True;
@@ -1270,6 +1311,7 @@ end;
 procedure TToggleSwitchTest.HeaderAlignment_ShouldCarryTheSwitchWithIt;
 var
   Centred, ToTheLeft: TBitmap;
+  First, Last: Integer;
 begin
   Centred := nil;
   ToTheLeft := nil;
@@ -1282,9 +1324,12 @@ begin
     ToTheLeft := RenderToBitmap(FToggle);
     // The switch band is the last TrackAreaHeight rows, whatever the header
     // font does above them
-    Assert.IsTrue(DescribeDifference(Centred, ToTheLeft,
-      FToggle.Height - TrackAreaHeight) <> '',
-      'The switch moves with the header instead of clinging to one edge');
+    // The track is inset a pixel inside the area and its cap is antialiased, so
+    // the first column it touches is named within a pixel rather than exactly
+    DifferingColumns(Centred, ToTheLeft, First, Last, FToggle.Height - TrackAreaHeight);
+    Assert.IsTrue(First <= 2, 'Left aligned, the switch sits against the left edge');
+    Assert.IsTrue(Last > TrackAreaWidth,
+      'and centred it reaches past where the left-aligned one ends');
   finally
     ToTheLeft.Free;
     Centred.Free;
@@ -1308,14 +1353,11 @@ begin
 end;
 
 procedure TToggleSwitchTest.ShowHeader_LongText_ShouldWidenTheControl;
-var
-  WidthBefore: Integer;
 begin
-  WidthBefore := FToggle.Width;
   FToggle.HeaderText := 'A header far wider than the switch itself';
   FToggle.ShowHeader := True;
-  Assert.IsTrue(FToggle.Width > WidthBefore,
-    'A header wider than the row should widen the control');
+  Assert.AreEqual(LineWidth(FToggle.HeaderFont, FToggle.HeaderText), FToggle.Width,
+    'A header wider than the row sets the width of the control');
 end;
 
 procedure TToggleSwitchTest.HeaderPosition_ShouldNotChangeTheSize;
