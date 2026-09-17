@@ -29,7 +29,6 @@ type
     StrokeOff: ARGB;
     TrackOn  : ARGB;
     ThumbOff : ARGB;
-    ThumbOn  : ARGB;
   end;
 
   TFluentToggleSwitch = class(TCustomControl)
@@ -60,7 +59,6 @@ type
     FFadeT: Single;
     FFadeStart: Int64;
     FAnimStartProgress: Single;
-    FAnimTarget: Single;
     FAnimStartTime: Int64;
     FAnimFrequency: Int64;
     FSliding: Boolean;
@@ -68,7 +66,6 @@ type
     FStateFrom: TFluentVisualState;
     FStateT: Single;
     FStateStartTime: Int64;
-    FStateDuration: Integer;
     FOnChange: TNotifyEvent;
     FTrackFrameColor: TColor;
     FTrackColorOff: TColor;
@@ -137,7 +134,6 @@ type
     procedure HeaderFontChanged(Sender: TObject);
     procedure Measure;
     procedure LayoutChanged(MoveWithTheHeader: Boolean = False);
-    function TopBand: Integer;
     function BlockWidth: Integer;
     function SwitchIndent: Integer;
     function SwitchArea: TRect;
@@ -269,14 +265,12 @@ const
   OffTrackFill  : array[TFluentInteractionState] of ARGB = ($06000000, $0F000000, $18000000, $00000000);
   OffTrackStroke: array[TFluentInteractionState] of ARGB = ($72000000, $72000000, $72000000, $37000000);
   OffThumbFill  : array[TFluentInteractionState] of ARGB = ($9E000000, $9E000000, $9E000000, $5C000000);
-  OnThumbFill   : array[TFluentInteractionState] of ARGB = ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF);
 
+  OnThumbFill        = $FFFFFFFF; // The On thumb is this white in every state
   DefaultAccentDark1 = $FF0067C0; // Windows 11 default accent shade, used when the system palette is unreadable
-
 
 var
   OnTrackFill   : array[TFluentInteractionState] of ARGB;
-
 
 // Cubic Bezier from (0,0) to (1,1) with the two control points on one axis
 function BezierAxis(T, C1, C2: Single): Single; inline;
@@ -330,7 +324,6 @@ begin
   Result.StrokeOff := LerpARGB(A.StrokeOff, B.StrokeOff, T);
   Result.TrackOn   := LerpARGB(A.TrackOn, B.TrackOn, T);
   Result.ThumbOff  := LerpARGB(A.ThumbOff, B.ThumbOff, T);
-  Result.ThumbOn   := LerpARGB(A.ThumbOn, B.ThumbOn, T);
 end;
 
 function ScaleAlpha(C: ARGB; Opacity: Single): ARGB;
@@ -346,7 +339,7 @@ var
   Key: HKEY;
   Palette: array[0..31] of Byte;
   Size, ValueType: DWORD;
-  RegResult : Integer;
+  RegResult: Integer;
 begin
   Result := DefaultAccentDark1;
   if RegOpenKeyEx(HKEY_CURRENT_USER, AccentKey, 0, KEY_READ, Key) <> ERROR_SUCCESS then
@@ -383,14 +376,9 @@ begin
 end;
 
 function TColorToARGB(C: TColor): ARGB;
-var
-  R, G, B: Byte;
 begin
   C := ColorToRGB(C);
-  R := C and $FF;
-  G := (C shr 8) and $FF;
-  B := (C shr 16) and $FF;
-  Result := MakeColor(255, R, G, B);
+  Result := MakeColor(255, GetRValue(C), GetGValue(C), GetBValue(C));
 end;
 
 procedure AddPillPath(Path: TGPGraphicsPath; X, Y, W, H: Single);
@@ -403,7 +391,6 @@ begin
   Path.AddArc(X + W - R * 2, Y, R * 2, H, 270, 180);
   Path.CloseFigure;
 end;
-
 
 { TFluentToggleSwitch }
 
@@ -422,10 +409,8 @@ begin
   FAnimProgress := 0.0;
   FFadeT := 1.0;
   FFadeValue := 0.0;
-  FAnimTarget := 0.0;
   FState := isNormal;
   FStateT := 1.0;
-  FStateDuration := StateDuration;
   QueryPerformanceFrequency(FAnimFrequency);
   DoubleBuffered := True;
   FTrackFrameColor := clDefault;
@@ -626,7 +611,6 @@ procedure TFluentToggleSwitch.SetHeaderSpacing(Value: Integer);
 begin
   if Value < 0 then
     Value := 0;
-
   if FHeaderSpacing <> Value then
   begin
     FHeaderSpacing := Value;
@@ -715,14 +699,11 @@ end;
 function TFluentToggleSwitch.CanAutoSize(var NewWidth, NewHeight: Integer): Boolean;
 begin
   Result := True;
-  NewWidth := Round(TrackAreaWidth * CurrentScale);
+  NewWidth := BlockWidth;
   NewHeight := Round(TrackAreaHeight * CurrentScale);
 
   if FShowText then
-  begin
-    Inc(NewWidth, TextGap + FTextWidth);
     NewHeight := Max(NewHeight, FTextHeight);
-  end;
 
   if FShowHeader then
   begin
@@ -745,14 +726,6 @@ begin
       if CanAutoSize(W, H) then
         SetBounds(Left, Top, W, H);
     end;
-end;
-
-function TFluentToggleSwitch.TopBand: Integer;
-begin
-  if FShowHeader and (FHeaderPosition = hpTop) then
-    Result := HeaderBand
-  else
-    Result := 0;
 end;
 
 function TFluentToggleSwitch.BlockWidth: Integer;
@@ -811,7 +784,7 @@ end;
 
 procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
 var
-  Band, Indent: Integer;
+  Row: TRect;
 begin
   // Loading measures against half-read properties and scaling against a scale not yet updated.
   // Loaded and ChangeScale each end with a pass of their own
@@ -821,20 +794,19 @@ begin
   Measure;
   AdjustSize;
 
-  Band := TopBand;
-  Indent := SwitchIndent;
+  Row := SwitchArea;
 
   if MoveWithTheHeader and AutoSize and (Align = alNone) then
   begin
-    if Band <> FTopBand then
-      Top := Top - (Band - FTopBand);
+    if Row.Top <> FTopBand then
+      Top := Top - (Row.Top - FTopBand);
 
-    if Indent <> FLeftIndent then
-      Left := Left - (Indent - FLeftIndent);
+    if Row.Left <> FLeftIndent then
+      Left := Left - (Row.Left - FLeftIndent);
   end;
 
-  FTopBand := Band;
-  FLeftIndent := Indent;
+  FTopBand := Row.Top;
+  FLeftIndent := Row.Left;
   Invalidate;
 end;
 
@@ -964,7 +936,6 @@ end;
 procedure TFluentToggleSwitch.StartAnimation;
 begin
   FAnimStartProgress := FAnimProgress;
-  FAnimTarget := Ord(FChecked);
   FSliding := True;
   QueryPerformanceCounter(FAnimStartTime);
   StartTimer;
@@ -987,7 +958,6 @@ begin
   end else begin
     FSliding := False;
     FAnimProgress := Ord(FChecked);
-    FAnimTarget := FAnimProgress;
     FFadeT := 1.0;
     FFadeValue := Ord(FChecked);
   end;
@@ -997,6 +967,7 @@ procedure TFluentToggleSwitch.AdvanceAnimation;
 var
   Counter: Int64;
   T: Single;
+  Span: Integer;
   Busy: Boolean;
 begin
   QueryPerformanceCounter(Counter);
@@ -1015,7 +986,7 @@ begin
         T := 0;
     end;
     FAnimProgress := FAnimStartProgress
-      + (FAnimTarget - FAnimStartProgress) * BezierEase(T, 0.1, 0.9, 0.2, 1.0);
+      + (Ord(FChecked) - FAnimStartProgress) * BezierEase(T, 0.1, 0.9, 0.2, 1.0);
   end;
 
   if FFadeT < 1.0 then
@@ -1033,7 +1004,12 @@ begin
 
   if FStateT < 1.0 then
   begin
-    T := (Counter - FStateStartTime) / FAnimFrequency * 1000 / FStateDuration;
+    if FState = isDisabled then
+      Span := DisabledStateDuration
+    else
+      Span := StateDuration;
+
+    T := (Counter - FStateStartTime) / FAnimFrequency * 1000 / Span;
     if T >= 1.0 then
       FStateT := 1.0
     else begin
@@ -1080,7 +1056,6 @@ begin
   FReportingClick := False;
   FGone := Outer;
 end;
-
 
 procedure TFluentToggleSwitch.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
@@ -1350,19 +1325,14 @@ begin
   Result.StrokeOff := OffTrackStroke[S];
   Result.TrackOn   := OnTrackFill[S];
   Result.ThumbOff  := OffThumbFill[S];
-  Result.ThumbOn   := OnThumbFill[S];
 end;
 
 function TFluentToggleSwitch.CurrentVisual: TFluentVisualState;
-var
-  Target: TFluentVisualState;
 begin
-  Target := StateVisual(FState);
+  Result := StateVisual(FState);
 
   if FStateT < 1.0 then
-    Result := LerpVisual(FStateFrom, Target, FStateT)
-  else
-    Result := Target;
+    Result := LerpVisual(FStateFrom, Result, FStateT);
 end;
 
 procedure TFluentToggleSwitch.UpdateVisualState;
@@ -1375,11 +1345,6 @@ begin
 
   FStateFrom := CurrentVisual;
   FState := NewState;
-  if NewState = isDisabled then
-    FStateDuration := DisabledStateDuration
-  else
-    FStateDuration := StateDuration;
-
   if CanAnimate then
   begin
     FStateT := 0;
@@ -1397,7 +1362,7 @@ var
   Path: TGPGraphicsPath;
   Brush: TGPSolidBrush;
   Pen: TGPPen;
-  TrackX, TrackY, TrackOffsetX: Single;
+  TrackX, TrackY: Single;
   TrackW, TrackH, PenW, K: Single;
   VS: TFluentVisualState;
   OffFill, OffStroke, OnFill: ARGB;
@@ -1407,9 +1372,17 @@ var
   ThumbW, ThumbH: Single;
   TextX, TextY: Integer;
   HeaderX, HeaderY: Integer;
-  RowTop, RowHeight, Indent: Integer;
+  RowTop, RowHeight, TrackOffsetX: Integer;
   Area: TRect;
   LabelText: string;
+
+  function Pick(Custom: TColor; Standard: ARGB): ARGB;
+  begin
+    if Custom = clDefault then
+      Result := Standard
+    else
+      Result := TColorToARGB(Custom);
+  end;
 
   procedure FillShape(Color: ARGB);
   begin
@@ -1429,10 +1402,9 @@ var
 
 begin
   Area := SwitchArea;
-  Indent := Area.Left;
   RowTop := Area.Top;
   RowHeight := Area.Height;
-  TrackOffsetX := Indent;
+  TrackOffsetX := Area.Left;
   K := CurrentScale;
   TrackW := TrackWidth * K;
   TrackH := TrackHeight * K;
@@ -1463,10 +1435,10 @@ begin
   begin
     if FTextPosition = tpLeft then
     begin
-      TextX := Round(TrackOffsetX);
+      TextX := TrackOffsetX;
       TrackOffsetX := TrackOffsetX + FTextWidth + TextGap;
     end else
-      TextX := Round(TrackOffsetX) + Round(TrackAreaWidth * K) + TextGap;
+      TextX := TrackOffsetX + Round(TrackAreaWidth * K) + TextGap;
 
     TextY := RowTop + (RowHeight - FTextHeight) div 2;
   end;
@@ -1478,30 +1450,11 @@ begin
   Fade := FFadeValue;
   OffOpacity := 1 - Fade;
 
-  if FTrackColorOff <> clDefault then
-    OffFill := TColorToARGB(FTrackColorOff)
-  else
-    OffFill := VS.TrackOff;
-
-  if FTrackFrameColor <> clDefault then
-    OffStroke := TColorToARGB(FTrackFrameColor)
-  else
-    OffStroke := VS.StrokeOff;
-
-  if FTrackColorOn <> clDefault then
-    OnFill := TColorToARGB(FTrackColorOn)
-  else
-    OnFill := VS.TrackOn;
-
-  if FThumbColorOff <> clDefault then
-    OffThumb := TColorToARGB(FThumbColorOff)
-  else
-    OffThumb := VS.ThumbOff;
-
-  if FThumbColorOn <> clDefault then
-    OnThumb := TColorToARGB(FThumbColorOn)
-  else
-    OnThumb := VS.ThumbOn;
+  OffFill   := Pick(FTrackColorOff, VS.TrackOff);
+  OffStroke := Pick(FTrackFrameColor, VS.StrokeOff);
+  OnFill    := Pick(FTrackColorOn, VS.TrackOn);
+  OffThumb  := Pick(FThumbColorOff, VS.ThumbOff);
+  OnThumb   := Pick(FThumbColorOn, OnThumbFill);
 
   ThumbW  := VS.ThumbW;
   ThumbH  := VS.ThumbH;
