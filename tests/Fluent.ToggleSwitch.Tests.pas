@@ -42,6 +42,9 @@ type
     procedure ReleaseKey(Key: Word);
     function RenderToBitmap(Toggle: TFluentToggleSwitch): TBitmap;
     function DescribeDifference(A, B: TBitmap; FromY: Integer = 0): string;
+    procedure DifferingColumns(A, B: TBitmap; out First, Last: Integer);
+    function LineHeight(Font: TFont): Integer;
+    function TrackLeftOnForm: Integer;
     procedure CopyThroughStream(Source, Target: TFluentToggleSwitch);
     function StreamFormWithSwitch(out Loaded: TFluentToggleSwitch;
       out SourceWidth: Integer): TForm;
@@ -240,8 +243,6 @@ type
     [Test]
     procedure DefaultHeaderValues;
 
-    [Test]
-    procedure ShowHeader_True_ShouldMakeRoomAbove;
 
     [Test]
     procedure ShowHeader_True_ShouldKeepTheTrackInPlace;
@@ -302,8 +303,9 @@ const
   // A drag only cares about the distance between them
   ThumbOffX = 11;
   ThumbOnX = 31;
-  // Mirrors DragThreshold and TrackAreaHeight in source/Fluent.ToggleSwitch.pas
+  // Mirrors DragThreshold and the track area in source/Fluent.ToggleSwitch.pas
   DragThreshold = 4;
+  TrackAreaWidth = 42;
   TrackAreaHeight = 22;
 
 procedure TToggleSwitchTest.Setup;
@@ -492,6 +494,13 @@ begin
 end;
 
 // The control as it would paint right now
+// Where the track sits on the form. The switch centres itself under a header
+// wider than it is, which is what HeaderAlignment defaults to
+function TToggleSwitchTest.TrackLeftOnForm: Integer;
+begin
+  Result := FToggle.Left + (FToggle.Width - TrackAreaWidth) div 2;
+end;
+
 function TToggleSwitchTest.RenderToBitmap(Toggle: TFluentToggleSwitch): TBitmap;
 begin
   Result := TBitmap.Create;
@@ -509,6 +518,53 @@ end;
 // where, which tells a thumb that moved from a color that changed. Only the
 // color bits count: the fourth byte of a 32-bit DIB is not painted by GDI and
 // carries whatever GDI+ happened to leave there
+// The columns two renders differ in. First comes back as -1 when they match.
+// Saying where the difference is, and not merely that there is one, is what
+// tells a focus ring apart from a ring drawn over the track outline
+procedure TToggleSwitchTest.DifferingColumns(A, B: TBitmap; out First, Last: Integer);
+type
+  PRow = ^TRow;
+  TRow = array[0..MaxInt div SizeOf(Cardinal) - 1] of Cardinal;
+const
+  ColorBits = $00FFFFFF;
+var
+  X, Y: Integer;
+  RowA, RowB: PRow;
+begin
+  First := -1;
+  Last := -1;
+  for Y := 0 to A.Height - 1 do
+  begin
+    RowA := A.ScanLine[Y];
+    RowB := B.ScanLine[Y];
+    for X := 0 to A.Width - 1 do
+      if (RowA^[X] and ColorBits) <> (RowB^[X] and ColorBits) then
+      begin
+        if (First < 0) or (X < First) then
+          First := X;
+        if X > Last then
+          Last := X;
+      end;
+  end;
+end;
+
+// A line of the given font, measured the way the switch measures it. The font
+// carries its height in pixels, so any device context answers the same
+function TToggleSwitchTest.LineHeight(Font: TFont): Integer;
+var
+  Bmp: TBitmap;
+  TM: TTextMetric;
+begin
+  Bmp := TBitmap.Create;
+  try
+    Bmp.Canvas.Font := Font;
+    GetTextMetrics(Bmp.Canvas.Handle, TM);
+    Result := TM.tmHeight;
+  finally
+    Bmp.Free;
+  end;
+end;
+
 function TToggleSwitchTest.DescribeDifference(A, B: TBitmap; FromY: Integer = 0): string;
 type
   PRow = ^TRow;
@@ -844,6 +900,7 @@ end;
 procedure TToggleSwitchTest.Focused_ShouldDrawTheRing;
 var
   Unfocused, WithRing: TBitmap;
+  First, Last: Integer;
 begin
   Unfocused := nil;
   WithRing := nil;
@@ -852,9 +909,12 @@ begin
     FocusTheSwitch;
     Assert.IsTrue(FToggle.Focused, 'The switch holds the focus');
     WithRing := RenderToBitmap(FToggle);
-    // Naming what did change makes a silent failure here readable
-    Assert.IsTrue(DescribeDifference(Unfocused, WithRing) <> '',
-      'A focused switch draws a ring the unfocused one does not');
+    // The ring goes on the bounds of the switch area, which for a bare switch
+    // is the whole control. A ring that landed on the track outline instead
+    // would still differ from the unfocused render, only not out here
+    DifferingColumns(Unfocused, WithRing, First, Last);
+    Assert.AreEqual(0, First, 'The ring reaches the first column of the control');
+    Assert.AreEqual(FToggle.Width - 1, Last, 'and the last one');
     Assert.IsTrue(RingShows(FToggle), 'and ShowFocus takes it away again');
   finally
     WithRing.Free;
@@ -874,8 +934,19 @@ begin
 end;
 
 procedure TToggleSwitchTest.Unfocused_ShouldDrawNoRing;
+var
+  Bmp: TBitmap;
 begin
   Assert.IsFalse(FToggle.Focused, 'Nothing gave the switch the focus');
+  Bmp := RenderToBitmap(FToggle);
+  try
+    // RingShows answers False for a switch that draws nothing either, so say
+    // first that there is a switch on the bitmap to speak about
+    Assert.IsTrue(Bmp.Canvas.Pixels[0, 0] <> Bmp.Canvas.Pixels[ThumbOffX, TrackAreaHeight div 2],
+      'The thumb is on the bitmap, so the switch did draw itself');
+  finally
+    Bmp.Free;
+  end;
   Assert.IsFalse(RingShows(FToggle), 'so ShowFocus changes nothing');
 end;
 
@@ -1163,43 +1234,35 @@ begin
   Assert.AreEqual(6, FToggle.HeaderSpacing, 'Six plus the pixel around the track');
 end;
 
-procedure TToggleSwitchTest.ShowHeader_True_ShouldMakeRoomAbove;
-var
-  HeightBefore: Integer;
-begin
-  HeightBefore := FToggle.Height;
-  FToggle.HeaderText := 'Header';
-  FToggle.ShowHeader := True;
-  Assert.IsTrue(FToggle.Height > HeightBefore,
-    'Height should grow by the header and its gap');
-end;
 
 // Room the header takes comes out of the form, not out of where the switch
 // was put
 procedure TToggleSwitchTest.ShowHeader_True_ShouldKeepTheTrackInPlace;
 var
-  TopBefore, HeightBefore: Integer;
+  HeightBefore, Band: Integer;
 begin
   FToggle.Top := 100;
   FToggle.HeaderText := 'Header';
-  TopBefore := FToggle.Top;
   HeightBefore := FToggle.Height;
+  // What the header is worth, measured from its font rather than from the
+  // growth we are about to check
+  Band := LineHeight(FToggle.HeaderFont) + FToggle.HeaderSpacing;
   FToggle.ShowHeader := True;
-  Assert.AreEqual(TopBefore - (FToggle.Height - HeightBefore), FToggle.Top,
-    'The control took the room above, so the track did not move');
+  Assert.AreEqual(HeightBefore + Band, FToggle.Height, 'The header took its own height and gap');
+  Assert.AreEqual(100 - Band, FToggle.Top, 'out of the form, so the track did not move');
 end;
 
 procedure TToggleSwitchTest.HeaderText_Long_ShouldKeepTheTrackInPlace;
 var
-  LeftBefore: Integer;
+  TrackBefore: Integer;
 begin
   FToggle.Left := 100;
   FToggle.ShowHeader := True;
   FToggle.HeaderText := 'H';
-  LeftBefore := FToggle.Left;
+  TrackBefore := TrackLeftOnForm;
   FToggle.HeaderText := 'A header far wider than the switch';
-  Assert.IsTrue(FToggle.Left < LeftBefore,
-    'A header wider than the switch grows the control both ways');
+  Assert.IsTrue(FToggle.Left < 100, 'A header wider than the switch grows the control leftwards');
+  Assert.AreEqual(TrackBefore, TrackLeftOnForm, 'and the track itself did not move');
 end;
 
 // A header wider than the switch decides where the switch goes. Only the band
@@ -1416,7 +1479,7 @@ end;
 
 procedure TToggleSwitchTest.Stream_Defaults_ShouldWriteNoOwnProperty;
 const
-  OwnProperties: array[0..21] of string = ('Checked', 'Animated',
+  OwnProperties: array[0..22] of string = ('Checked', 'Animated', 'AutoSize',
     'AnimationDuration', 'TabStop', 'ShowFocus', 'KeyboardToggle',
     'TrackFrameColor', 'TrackColorOff',
     'TrackColorOn', 'ThumbColorOff', 'ThumbColorOn', 'ShowText', 'TextOn',
@@ -1427,6 +1490,8 @@ var
   Name: string;
 begin
   Dfm := AsText(FToggle);
+  // Every Pos below answers 0 on an empty string, so make sure there is a DFM
+  Assert.IsTrue(Pos('object ', Dfm) > 0, 'The switch wrote something to look at');
   for Name in OwnProperties do
     // HeaderFont streams as HeaderFont.Name and friends, the rest as Name =
     Assert.AreEqual(0, Pos('  ' + Name + ' =', Dfm) + Pos('  ' + Name + '.', Dfm),
