@@ -167,6 +167,12 @@ type
     procedure Unfocused_ShouldDrawNoRing;
 
     [Test]
+    procedure FocusRing_ShouldFollowTheWindowUIState;
+
+    [Test]
+    procedure KillFocus_ShouldDropAHeldKey;
+
+    [Test]
     procedure DragPastMiddle_ShouldTurnOnAndFireOnChange;
 
     [Test]
@@ -251,6 +257,15 @@ type
     procedure TextTop_ShouldFollowTheHeader;
 
     [Test]
+    procedure Font_Changed_ShouldMeasureAgain;
+
+    [Test]
+    procedure HeaderFont_Changed_ShouldMeasureAgain;
+
+    [Test]
+    procedure TextPosition_Left_ShouldMoveTheTrack;
+
+    [Test]
     procedure CreateAndDestroy_ShouldNotLeak;
 
     // --- Scaling ---
@@ -319,6 +334,9 @@ type
 
     [Test]
     procedure Stream_Load_WithShowText_ShouldMeasureAfterLoad;
+
+    [Test]
+    procedure Stream_Load_WithHeader_ShouldNotMoveTheControl;
 
     [Test]
     procedure Stream_Font_WithHeaderFollowing_ShouldRoundTrip;
@@ -1068,6 +1086,27 @@ begin
   Assert.IsFalse(RingShows(FToggle), 'so ShowFocus changes nothing');
 end;
 
+// Windows keeps focus rings hidden until someone reaches for the keyboard and
+// says so through the UI state of the window. The switch asks it every time
+procedure TToggleSwitchTest.FocusRing_ShouldFollowTheWindowUIState;
+begin
+  FocusTheSwitch;
+  Assert.IsTrue(RingShows(FToggle), 'With focus cues on the ring shows');
+  FForm.Perform(WM_CHANGEUISTATE, MakeWParam(UIS_SET, UISF_HIDEFOCUS), 0);
+  Assert.IsFalse(RingShows(FToggle), 'and hiding them takes it away again');
+end;
+
+// A key still down when the focus moves on will never come back up here
+procedure TToggleSwitchTest.KillFocus_ShouldDropAHeldKey;
+begin
+  FToggle.OnChange := HandleOnChange;
+  PressKey(VK_SPACE);
+  FToggle.Perform(WM_KILLFOCUS, 0, 0);
+  ReleaseKey(VK_SPACE);
+  Assert.IsFalse(FToggle.Checked, 'A key released after the focus left toggles nothing');
+  Assert.IsFalse(FOnChangeFired, 'and fires nothing');
+end;
+
 procedure TToggleSwitchTest.DragPastMiddle_ShouldTurnOnAndFireOnChange;
 begin
   FOnChangeFired := False;
@@ -1373,6 +1412,61 @@ begin
   Assert.AreEqual(Bare, FToggle.TextTop, 'and a header below leaves it where it was');
   FToggle.ShowText := False;
   Assert.AreEqual(Bare, FToggle.TextTop, 'The baseline is published with the caption hidden too');
+end;
+
+// The caption is measured when the font changes, not only when the text does
+procedure TToggleSwitchTest.Font_Changed_ShouldMeasureAgain;
+begin
+  FToggle.ShowText := True;
+  FToggle.ParentFont := False;
+  FToggle.Font.Size := FToggle.Font.Size * 2;
+  Assert.AreEqual(TrackAreaWidth + TextGap + CaptionWidth, FToggle.Width,
+    'A font of its own is measured when it changes');
+
+  // And the same when the font arrives from the form instead
+  FToggle.ParentFont := True;
+  FForm.Font.Size := FForm.Font.Size * 3;
+  Assert.AreEqual(TrackAreaWidth + TextGap + CaptionWidth, FToggle.Width,
+    'and so is one inherited from the form');
+end;
+
+// The header carries its own font, and the band it takes follows that
+procedure TToggleSwitchTest.HeaderFont_Changed_ShouldMeasureAgain;
+var
+  Row: Integer;
+begin
+  FToggle.ShowText := True;
+  FToggle.HeaderText := 'Header';
+  FToggle.ShowHeader := True;
+  FToggle.HeaderFont.Size := FToggle.HeaderFont.Size * 2;
+  Row := TrackAreaHeight;
+  if LineHeight(FToggle.Font) > Row then
+    Row := LineHeight(FToggle.Font);
+  Assert.AreEqual(Row + LineHeight(FToggle.HeaderFont) + FToggle.HeaderSpacing,
+    FToggle.Height, 'The band grows with the font the header is written in');
+end;
+
+// With the caption on the left the track moves to the other end, which only
+// the drawing knows about
+procedure TToggleSwitchTest.TextPosition_Left_ShouldMoveTheTrack;
+var
+  Bmp: TBitmap;
+  Y: Integer;
+begin
+  FToggle.ShowText := True;
+  FToggle.ThumbColorOff := clRed;
+  FToggle.TextPosition := tpLeft;
+  Y := FToggle.Height div 2;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed),
+      Bmp.Canvas.Pixels[FToggle.Width - TrackAreaWidth + ThumbOffX, Y],
+      'The thumb sits at the far end, past the caption');
+    Assert.IsTrue(Bmp.Canvas.Pixels[ThumbOffX, Y] <> TColor(clRed),
+      'and no longer where the caption on the right would leave it');
+  finally
+    Bmp.Free;
+  end;
 end;
 
 procedure TToggleSwitchTest.CreateAndDestroy_ShouldNotLeak;
@@ -1884,6 +1978,27 @@ begin
   finally
     Loaded.Free;
     Reference.Free;
+  end;
+end;
+
+// The designer wrote down where the switch ended up, header and all. Reading
+// that back must not run the move that makes room for a header
+procedure TToggleSwitchTest.Stream_Load_WithHeader_ShouldNotMoveTheControl;
+var
+  Loaded: TFluentToggleSwitch;
+begin
+  Loaded := TFluentToggleSwitch.Create(nil);
+  try
+    LoadText('object TFluentToggleSwitch'#13#10 +
+      '  Top = 50'#13#10 +
+      '  HeaderText = ''Header'''#13#10 +
+      '  ShowHeader = True'#13#10 +
+      'end', Loaded);
+    Assert.AreEqual(50, Loaded.Top, 'A form says where it put the switch, header and all');
+    Assert.AreEqual(TrackAreaHeight + LineHeight(Loaded.HeaderFont) + Loaded.HeaderSpacing,
+      Loaded.Height, 'and the header still got its band');
+  finally
+    Loaded.Free;
   end;
 end;
 
