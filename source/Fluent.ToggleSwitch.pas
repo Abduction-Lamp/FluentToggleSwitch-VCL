@@ -44,6 +44,7 @@ type
     FShowFocus: Boolean;
     FTopBand: Integer;
     FUserScale: Single;
+    FScaling: Boolean;
     FGone: PBoolean;
     FReportingClick: Boolean;
     FLeftIndent: Integer;
@@ -94,6 +95,7 @@ type
 
     procedure SetChecked(Value: Boolean);
     procedure SetAnimationDuration(Value: Integer);
+    function CanAnimate: Boolean;
     procedure StartTimer;
     procedure StopTimer;
     procedure StartAnimation;
@@ -811,13 +813,18 @@ procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
 var
   Band, Indent: Integer;
 begin
+  // Loading measures against half-read properties and scaling against a scale not yet updated.
+  // Loaded and ChangeScale each end with a pass of their own
+  if FScaling or (csLoading in ComponentState) then
+    Exit;
+
   Measure;
   AdjustSize;
 
   Band := TopBand;
   Indent := SwitchIndent;
 
-  if MoveWithTheHeader and AutoSize and (Align = alNone) and not (csLoading in ComponentState) then
+  if MoveWithTheHeader and AutoSize and (Align = alNone) then
   begin
     if Band <> FTopBand then
       Top := Top - (Band - FTopBand);
@@ -860,14 +867,20 @@ end;
 
 procedure TFluentToggleSwitch.ChangeScale(M, D: Integer; isDpiChange: Boolean);
 begin
-  inherited;
-  if not isDpiChange and not (csLoading in ComponentState) then
-    FUserScale := FUserScale * M / D;
+  FScaling := True;
+  try
+    inherited;
+    if not isDpiChange and not (csLoading in ComponentState) then
+      FUserScale := FUserScale * M / D;
 
-  if FHeaderFontCustom then
-    FHeaderFont.Height := MulDiv(FHeaderFont.Height, M, D);
+    if FHeaderFontCustom then
+      FHeaderFont.Height := MulDiv(FHeaderFont.Height, M, D);
 
-  FStateT := 1.0;
+    FStateT := 1.0;
+  finally
+    FScaling := False;
+  end;
+
   LayoutChanged;
 end;
 
@@ -923,6 +936,12 @@ begin
     FOnChange(Self);
 end;
 
+// The system call goes last, behind the checks that cost a tick
+function TFluentToggleSwitch.CanAnimate: Boolean;
+begin
+  Result := FAnimated and HandleAllocated and Showing and SystemAnimationsOn;
+end;
+
 procedure TFluentToggleSwitch.StartTimer;
 begin
   if FAnimating or not HandleAllocated then
@@ -961,7 +980,7 @@ end;
 
 procedure TFluentToggleSwitch.SettleThumb;
 begin
-  if FAnimated and SystemAnimationsOn and HandleAllocated and Showing then
+  if CanAnimate then
   begin
     StartFade;
     StartAnimation;
@@ -1361,7 +1380,7 @@ begin
   else
     FStateDuration := StateDuration;
 
-  if FAnimated and SystemAnimationsOn and HandleAllocated and Showing then
+  if CanAnimate then
   begin
     FStateT := 0;
     QueryPerformanceCounter(FStateStartTime);
@@ -1519,8 +1538,6 @@ begin
         Path.Reset;
         AddPillPath(Path, TrackX, TrackY, TrackW, TrackH);
         FillShape(ScaleAlpha(OnFill, Fade));
-        Path.Reset;
-        AddPillPath(Path, TrackX + PenW / 2, TrackY + PenW / 2, TrackW - PenW, TrackH - PenW);
       end;
 
     Path.Reset;
