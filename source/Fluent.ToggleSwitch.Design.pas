@@ -29,11 +29,11 @@ implementation
 
 { TFluentToggleSwitchGuidelines }
 
+// The baseline is published even with the label hidden, the way a check box publishes
+// one without a caption, so a bare switch still lines up with the text beside it
 function TFluentToggleSwitchGuidelines.GetCount: Integer;
 begin
-  Result := inherited GetCount;
-  if TFluentToggleSwitch(Component).ShowText then
-    Inc(Result);
+  Result := inherited GetCount + 1;
 end;
 
 function TFluentToggleSwitchGuidelines.GetDesignerGuideType(Index: Integer): TDesignerGuideType;

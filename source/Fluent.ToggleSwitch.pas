@@ -674,26 +674,23 @@ var
   SizeOn, SizeOff, SizeHeader: TSize;
 begin
   FTextWidth := 0;
-  FTextHeight := 0;
-  FTextAscent := 0;
   FHeaderWidth := 0;
   FHeaderHeight := 0;
-
-  if not (FShowText or FShowHeader) then
-    Exit;
 
   DC := GetDC(0);
   try
     SaveFont := SelectObject(DC, Font.Handle);
 
+    // Taken whether or not the label is shown, because the baseline is where it would sit
+    GetTextMetrics(DC, TM);
+    FTextHeight := TM.tmHeight;
+    FTextAscent := TM.tmAscent;
+
     if FShowText then
     begin
-      GetTextMetrics(DC, TM);
       GetTextExtentPoint32(DC, PChar(FTextOn), Length(FTextOn), SizeOn);
       GetTextExtentPoint32(DC, PChar(FTextOff), Length(FTextOff), SizeOff);
       FTextWidth := Max(SizeOn.cx, SizeOff.cx);
-      FTextHeight := TM.tmHeight;
-      FTextAscent := TM.tmAscent;
     end;
 
     if FShowHeader then
