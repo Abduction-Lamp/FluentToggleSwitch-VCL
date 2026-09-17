@@ -133,6 +133,7 @@ type
     procedure HeaderFontChanged(Sender: TObject);
     procedure Measure;
     procedure LayoutChanged(MoveWithTheHeader: Boolean = False);
+    function TopBand: Integer;
     function BlockWidth: Integer;
     function SwitchIndent: Integer;
     function SwitchArea: TRect;
@@ -721,6 +722,16 @@ begin
     end;
 end;
 
+// Not taken from SwitchArea: that reads ClientRect, and reading it creates the window,
+// which the constructor must not do before there is a parent to create it in
+function TFluentToggleSwitch.TopBand: Integer;
+begin
+  if FShowHeader and (FHeaderPosition = hpTop) then
+    Result := HeaderBand
+  else
+    Result := 0;
+end;
+
 function TFluentToggleSwitch.BlockWidth: Integer;
 begin
   Result := Round(TrackAreaWidth * CurrentScale);
@@ -777,7 +788,7 @@ end;
 
 procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
 var
-  Row: TRect;
+  Band, Indent: Integer;
 begin
   // Loading measures against half-read properties and scaling against a scale not yet updated.
   // Loaded and ChangeScale each end with a pass of their own
@@ -787,19 +798,20 @@ begin
   Measure;
   AdjustSize;
 
-  Row := SwitchArea;
+  Band := TopBand;
+  Indent := SwitchIndent;
 
   if MoveWithTheHeader and AutoSize and (Align = alNone) then
   begin
-    if Row.Top <> FTopBand then
-      Top := Top - (Row.Top - FTopBand);
+    if Band <> FTopBand then
+      Top := Top - (Band - FTopBand);
 
-    if Row.Left <> FLeftIndent then
-      Left := Left - (Row.Left - FLeftIndent);
+    if Indent <> FLeftIndent then
+      Left := Left - (Indent - FLeftIndent);
   end;
 
-  FTopBand := Row.Top;
-  FLeftIndent := Row.Left;
+  FTopBand := Band;
+  FLeftIndent := Indent;
   Invalidate;
 end;
 
