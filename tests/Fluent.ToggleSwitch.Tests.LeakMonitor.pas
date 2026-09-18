@@ -16,9 +16,22 @@ implementation
 uses
   System.SysUtils,
   DUnitX.TestFramework,
+{$IF CompilerVersion >= 37}
+  DUnitX.ServiceLocator;
+{$ELSE}
   DUnitX.IoC;
+{$ENDIF}
 
 type
+  ///  DUnitX renamed its container: DUnitX.IoC and TDUnitXIoC became
+  ///  DUnitX.ServiceLocator and TDUnitXServiceLocator. Florence ships the new
+  ///  name, Athens the old one; the API is the same either way
+{$IF CompilerVersion >= 37}
+  TDUnitXContainer = TDUnitXServiceLocator;
+{$ELSE}
+  TDUnitXContainer = TDUnitXIoC;
+{$ENDIF}
+
   TBlockClass = (bcSmall, bcMedium, bcLarge);
 
   TRtlMemoryLeakMonitor = class(TInterfacedObject, IMemoryLeakMonitor, IMemoryLeakMonitor2)
@@ -153,7 +166,7 @@ begin
 end;
 
 initialization
-  TDUnitXIoC.DefaultContainer.RegisterType<IMemoryLeakMonitor>(
+  TDUnitXContainer.DefaultContainer.RegisterType<IMemoryLeakMonitor>(
     function: IMemoryLeakMonitor
     begin
       ///  A replacement memory manager would leave the RTL snapshots empty and

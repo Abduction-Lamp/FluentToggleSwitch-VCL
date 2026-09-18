@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   settings, the way the other component libraries for Delphi work, rather than
   linking `.dcu` built with the package's settings.
 
+- The leak monitor of the test project follows DUnitX through a rename of its
+  own: Florence ships `DUnitX.ServiceLocator` with `TDUnitXServiceLocator`,
+  Athens ships `DUnitX.IoC` with `TDUnitXIoC`. The unit picks one by compiler
+  version, so the tests build on both. Nothing outside `tests/` is affected.
+
 ### Upgrading from 2.0.0
 
 Installing the packages no longer makes the unit visible on its own.
