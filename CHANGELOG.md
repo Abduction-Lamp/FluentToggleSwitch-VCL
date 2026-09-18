@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-09-18
+
+### Changed
+
+- Both packages now leave their `.dcu` in `.\$(Platform)\$(Config)`, beside the
+  package itself, instead of `$(BDSCOMMONDIR)\Dcp`. The old directory is on the
+  library path by default, which is why installing the packages used to be
+  enough on its own; it is also shared by every platform and configuration, so
+  Win32 and Win64, Debug and Release wrote `.dcu` of the same names over each
+  other and the last build won. The setting came from the IDE template and was
+  never a decision.
+
+  Projects now compile the component from `source` under their own compiler
+  settings, the way the other component libraries for Delphi work, rather than
+  linking `.dcu` built with the package's settings.
+
+### Upgrading from 2.0.0
+
+Installing the packages no longer makes the unit visible on its own.
+
+1. Add the `source` directory of this release to the library path, under
+   **Tools | Options | Language | Delphi | Library**, for every platform you
+   build for. Without it projects stop finding `Fluent.ToggleSwitch`.
+2. Delete what the old layout left behind:
+   `$(BDSCOMMONDIR)\Dcp\Fluent.ToggleSwitch*.dcu`. While those files are
+   there the compiler keeps finding them, and the change appears to have done
+   nothing.
+
+Nothing in the component itself changed: same unit, same class, same
+properties.
+
 ## [2.0.0] - 2026-09-17
 
 The switch answers the keyboard, carries a header, and follows the accent
@@ -234,6 +265,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
+[2.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
 [1.6.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.4.0...v1.5.0

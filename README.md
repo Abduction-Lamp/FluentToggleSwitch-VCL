@@ -46,18 +46,28 @@ design-time package, is Win32.
 
 ## Installing
 
-1. Clone the repository and open `FluentToggleSwitch.groupproj`.
-2. Build **FluentToggleSwitchR**, the runtime package.
-3. Build **FluentToggleSwitchD**, the design-time package, and install it.
+1. Unpack a release where it can stay: the path ends up in your IDE settings.
+   Keeping the version in it, say `FluentToggleSwitch-VCL\2.1.0`, turns the
+   next upgrade into a one-line edit.
+2. Put its `source` directory on the library path, under **Tools | Options |
+   Language | Delphi | Library**, once for every platform you build for.
+3. Open `FluentToggleSwitch.groupproj`, build **FluentToggleSwitchR**, the
+   runtime package, then build **FluentToggleSwitchD**, the design-time one,
+   and install it.
 
 `TFluentToggleSwitch` appears on the **Fluent** page of the palette.
+
+Step 2 is what makes the unit visible to your projects. The packages keep
+their `.dcu` beside themselves and put nothing in a directory the compiler
+already searches, so your project compiles the component from source, under
+its own compiler settings, instead of linking `.dcu` built with the package's.
 
 Changing the component afterwards means building both packages again and
 restarting the IDE: the design-time package has the runtime one as a
 dependency, and a loaded package cannot be swapped underneath the IDE.
 
-To use the source without installing anything, put `source` on the search path
-of your project and add `Fluent.ToggleSwitch` to a uses clause.
+Only the designer needs the packages installed. A project that creates the
+switch from code compiles with step 2 alone.
 
 ## Using it
 
