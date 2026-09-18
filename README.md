@@ -40,9 +40,16 @@ Full reference: [docs/API.md](docs/API.md).
 
 ## Requirements
 
-Delphi 12.1 Athens, or a version close enough to compile it. The runtime
-package builds for Win32 and Win64; the design-time package, like every
-design-time package, is Win32.
+Delphi 13 Florence. The project files are saved in its format, and an older
+IDE will not open them.
+
+On 12.1 Athens, open `packages\FluentToggleSwitchR.dpk` and
+`packages\FluentToggleSwitchD.dpk` instead: a `.dpk` carries its own unit list
+and dependencies, and the IDE builds a project around it. That route is not
+tested here — if something breaks on Athens, open an issue.
+
+The runtime package builds for Win32 and Win64; the design-time package, like
+every design-time package, is Win32.
 
 ## Installing
 
