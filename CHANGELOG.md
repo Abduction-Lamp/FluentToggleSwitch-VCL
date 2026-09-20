@@ -45,10 +45,12 @@ The `.bpl` files are renamed, so the IDE still has the old ones registered.
 1. Under Component → Install Packages remove the entry without a version
    suffix, `FluentToggleSwitchD.bpl`, and `FluentToggleSwitchR.bpl` if it is
    listed there too.
-2. Delete `FluentToggleSwitch{R,D}.bpl` from `$(BDSCOMMONDIR)\Bpl` and
-   `FluentToggleSwitch{R,D}.dcp` from `$(BDSCOMMONDIR)\Dcp`. While the old
-   files are there, a project asking for the package by name can still find
-   them.
+2. Delete `FluentToggleSwitchR.bpl` and `FluentToggleSwitchD.bpl` — the ones
+   without a suffix — from `$(BDSCOMMONDIR)\Bpl`. Nothing rebuilds them any
+   more, and while they are there a project asking for the package by name can
+   still find them. The `.dcp`, `.bpi` and `.lib` in `$(BDSCOMMONDIR)\Dcp`
+   keep their names: the suffix applies to the `.bpl` alone, so those files are
+   simply overwritten and must stay.
 3. Build and install the packages again, as in **Installing** in the README.
 
 ## [2.1.0] - 2026-09-18
