@@ -25,7 +25,7 @@
 {$IMAGEBASE $400000}
 {$DEFINE RELEASE}
 {$ENDIF IMPLICITBUILDING}
-{$DESCRIPTION 'Fluent ToggleSwitch 2.1.0  design-time'}
+{$DESCRIPTION 'Fluent ToggleSwitch 2.1.0 design-time'}
 {$LIBSUFFIX AUTO}
 {$DESIGNONLY}
 {$IMPLICITBUILD ON}
