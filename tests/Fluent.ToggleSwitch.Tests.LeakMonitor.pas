@@ -67,7 +67,7 @@ var
 begin
   Result := Int64(State.TotalAllocatedMediumBlockSize) + Int64(State.TotalAllocatedLargeBlockSize);
   for Block in State.SmallBlockTypeStates do
-    Inc(Result, Int64(Block.UseableBlockSize) * Block.AllocatedBlockCount);
+    Inc(Result, Int64(Block.UseableBlockSize) * Int64(Block.AllocatedBlockCount));
 end;
 
 procedure TRtlMemoryLeakMonitor.PreSetup;

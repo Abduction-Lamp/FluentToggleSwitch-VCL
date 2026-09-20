@@ -5,6 +5,57 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+The next release takes the major number: the rename below breaks every
+installation of 2.1.0.
+
+### Changed
+
+- **Breaking.** A compiled package carries the compiler version in its name:
+  `FluentToggleSwitchR370.bpl` under Florence, `FluentToggleSwitchR290.bpl`
+  under Athens, the way RAD Studio names `rtl290` and `vcl370`. Both packages
+  used to build as `FluentToggleSwitchR.bpl` and `FluentToggleSwitchD.bpl`
+  whichever IDE produced them. Inside the IDE that collided with nothing, since
+  every version keeps its own `Bpl` directory, but two applications deployed
+  with runtime packages into one directory overwrote each other's copy, and the
+  name said nothing about which was which.
+
+- Each package states what it is for. The runtime package is runtime only and
+  no longer appears in Component → Install Packages, where installing it
+  registered nothing; the design-time package is design-time only. Their
+  descriptions name the role, so the two are no longer identical entries in the
+  IDE lists.
+
+- Both packages build for Win64 as well as Win32, and so do the tests. The
+  runtime package targeted Win32 alone while the README promised both, so a
+  Win64 application built with runtime packages had nothing to link against.
+  The component source needed no change for it — no pointer casts, no
+  assembler, no platform conditionals — and the tests pass on both platforms.
+  Whether the Win64 design-time package installs into the 64-bit IDE of
+  Florence is untested.
+
+- The version resource of both packages is filled in: company, product and
+  copyright as they read in `LICENSE`, a description naming the package, and a
+  comment pointing at the repository. The properties of a `.bpl` now say who
+  made it and under what licence — which is worth something, since the file
+  travels without `LICENSE` beside it.
+
+### Upgrading from 2.1.0
+
+The `.bpl` files are renamed, so the IDE still has the old ones registered.
+
+1. Under Component → Install Packages remove the entry without a version
+   suffix, `FluentToggleSwitchD.bpl`, and `FluentToggleSwitchR.bpl` if it is
+   listed there too.
+2. Delete `FluentToggleSwitchR.bpl` and `FluentToggleSwitchD.bpl` — the ones
+   without a suffix — from `$(BDSCOMMONDIR)\Bpl`. Nothing rebuilds them any
+   more, and while they are there a project asking for the package by name can
+   still find them. The `.dcp`, `.bpi` and `.lib` in `$(BDSCOMMONDIR)\Dcp`
+   keep their names: the suffix applies to the `.bpl` alone, so those files are
+   simply overwritten and must stay.
+3. Build and install the packages again, as in **Installing** in the README.
+
 ## [2.1.0] - 2026-09-18
 
 ### Changed
@@ -270,6 +321,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
+[Unreleased]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.1.0...HEAD
 [2.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
 [1.6.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.5.0...v1.6.0
