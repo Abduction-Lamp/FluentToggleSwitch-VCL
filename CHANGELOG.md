@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Whether the Win64 design-time package installs into the 64-bit IDE of
   Florence is untested.
 
+- The version resource of both packages is filled in: company, product and
+  copyright as they read in `LICENSE`, a description naming the package, and a
+  comment pointing at the repository. The properties of a `.bpl` now say who
+  made it and under what licence — which is worth something, since the file
+  travels without `LICENSE` beside it.
+
 ### Upgrading from 2.1.0
 
 The `.bpl` files are renamed, so the IDE still has the old ones registered.
