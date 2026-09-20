@@ -48,8 +48,10 @@ On 12.1 Athens, open `packages\FluentToggleSwitchR.dpk` and
 and dependencies, and the IDE builds a project around it. That route is not
 tested here — if something breaks on Athens, open an issue.
 
-The runtime package builds for Win32 and Win64; the design-time package, like
-every design-time package, is Win32.
+Both packages build for Win32 and Win64. Which build of the design-time
+package the IDE can install depends on the IDE itself: the 32-bit one takes
+Win32, the 64-bit one introduced in Florence takes Win64. Installing into the
+64-bit IDE is untested here.
 
 ## Installing
 
@@ -63,6 +65,10 @@ every design-time package, is Win32.
    and install it.
 
 `TFluentToggleSwitch` appears on the **Fluent** page of the palette.
+
+The built packages carry the compiler version in their name —
+`FluentToggleSwitchR370.bpl` under Florence — so packages built by different
+IDE versions can sit side by side without overwriting one another.
 
 Step 2 is what makes the unit visible to your projects. The packages keep
 their `.dcu` beside themselves and put nothing in a directory the compiler

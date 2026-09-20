@@ -5,6 +5,46 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking.** A compiled package carries the compiler version in its name:
+  `FluentToggleSwitchR370.bpl` under Florence, `FluentToggleSwitchR290.bpl`
+  under Athens, the way RAD Studio names `rtl290` and `vcl370`. Both packages
+  used to build as `FluentToggleSwitchR.bpl` and `FluentToggleSwitchD.bpl`
+  whichever IDE produced them. Inside the IDE that collided with nothing, since
+  every version keeps its own `Bpl` directory, but two applications deployed
+  with runtime packages into one directory overwrote each other's copy, and the
+  name said nothing about which was which.
+
+- Each package states what it is for. The runtime package is runtime only and
+  no longer appears in Component → Install Packages, where installing it
+  registered nothing; the design-time package is design-time only. Their
+  descriptions name the role, so the two are no longer identical entries in the
+  IDE lists.
+
+- Both packages build for Win64 as well as Win32, and so do the tests. The
+  runtime package targeted Win32 alone while the README promised both, so a
+  Win64 application built with runtime packages had nothing to link against.
+  The component source needed no change for it — no pointer casts, no
+  assembler, no platform conditionals — and the tests pass on both platforms.
+  Whether the Win64 design-time package installs into the 64-bit IDE of
+  Florence is untested.
+
+### Upgrading from 2.1.0
+
+The `.bpl` files are renamed, so the IDE still has the old ones registered.
+
+1. Under Component → Install Packages remove the entry without a version
+   suffix, `FluentToggleSwitchD.bpl`, and `FluentToggleSwitchR.bpl` if it is
+   listed there too.
+2. Delete `FluentToggleSwitch{R,D}.bpl` from `$(BDSCOMMONDIR)\Bpl` and
+   `FluentToggleSwitch{R,D}.dcp` from `$(BDSCOMMONDIR)\Dcp`. While the old
+   files are there, a project asking for the package by name can still find
+   them.
+3. Build and install the packages again, as in **Installing** in the README.
+
 ## [2.1.0] - 2026-09-18
 
 ### Changed
