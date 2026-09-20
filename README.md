@@ -67,11 +67,11 @@ Win32, the 64-bit one introduced in Florence takes Win64. Installing into the
 `TFluentToggleSwitch` appears on the **Fluent** page of the palette.
 
 A built package carries the compiler version in the name of its `.bpl` —
-`FluentToggleSwitchR370.bpl` under Florence, while the `.dcp` beside it keeps
-the plain name. Inside the IDE this changes
-nothing, as every version keeps its own directory for packages; it matters once
-a `.bpl` leaves it and ships beside an application built with runtime packages,
-where builds from two Delphi versions would otherwise share one file name.
+`FluentToggleSwitchR370.bpl` under Florence — while the `.dcp` beside it
+keeps the plain name. Inside the IDE this changes nothing, as every version
+keeps its own directory for packages; it matters once a `.bpl` leaves it and
+ships beside an application built with runtime packages, where builds from two
+Delphi versions would otherwise share one file name.
 
 Step 2 is what makes the unit visible to your projects. The packages keep
 their `.dcu` beside themselves and put nothing in a directory the compiler

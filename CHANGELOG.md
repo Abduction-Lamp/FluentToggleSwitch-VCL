@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+The next release takes the major number: the rename below breaks every
+installation of 2.1.0.
+
 ### Changed
 
 - **Breaking.** A compiled package carries the compiler version in its name:
@@ -318,6 +321,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
+[Unreleased]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.1.0...HEAD
 [2.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
 [1.6.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.5.0...v1.6.0
