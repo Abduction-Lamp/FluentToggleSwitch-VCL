@@ -32,7 +32,7 @@ type
     ThumbOff : ARGB;
   end;
 
-  TFluentToggleSwitch = class(TCustomControl)
+  TCustomFluentToggleSwitch = class(TCustomControl)
   private
     FChecked: Boolean;
 
@@ -167,11 +167,35 @@ type
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure KeyUp(var Key: Word; Shift: TShiftState); override;
 
+    property Checked: Boolean read FChecked write SetChecked default False;
+    property Animated: Boolean read FAnimated write FAnimated default True;
+    property AnimationDuration: Integer read FAnimationDuration write SetAnimationDuration default 367;
+    property ShowFocus: Boolean read FShowFocus write SetShowFocus default True;
+    property KeyboardToggle: Boolean read FKeyboardToggle write FKeyboardToggle default True;
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property TrackFrameColor: TColor read FTrackFrameColor write SetTrackFrameColor default clDefault;
+    property TrackColorOff: TColor read FTrackColorOff write SetTrackColorOff default clDefault;
+    property TrackColorOn: TColor read FTrackColorOn write SetTrackColorOn default clDefault;
+    property ThumbColorOff: TColor read FThumbColorOff write SetThumbColorOff default clDefault;
+    property ThumbColorOn: TColor read FThumbColorOn write SetThumbColorOn default clDefault;
+    property ShowText: Boolean read FShowText write SetShowText default False;
+    property TextOn: string read FTextOn write SetTextOn stored IsTextOnStored;
+    property TextOff: string read FTextOff write SetTextOff stored IsTextOffStored;
+    property TextPosition: TFluentTextPosition read FTextPosition write SetTextPosition default tpRight;
+    property TextSpacing: Integer read FTextSpacing write SetTextSpacing default 12;
+    property ShowHeader: Boolean read FShowHeader write SetShowHeader default False;
+    property HeaderText: string read FHeaderText write SetHeaderText;
+    property HeaderPosition: TFluentHeaderPosition read FHeaderPosition write SetHeaderPosition default hpTop;
+    property HeaderAlignment: TAlignment read FHeaderAlignment write SetHeaderAlignment default taCenter;
+    property HeaderSpacing: Integer read FHeaderSpacing write SetHeaderSpacing default 6;
+    property HeaderFont: TFont read FHeaderFont write SetHeaderFont stored FHeaderFontCustom;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     function TextTop: Integer;
+  end;
 
+  TFluentToggleSwitch = class(TCustomFluentToggleSwitch)
   published
     property Align;
     property AlignWithMargins;
@@ -190,35 +214,35 @@ type
     property PopupMenu;
     property ShowHint;
     property Visible;
-    property Checked: Boolean read FChecked write SetChecked default False;
-    property Animated: Boolean read FAnimated write FAnimated default True;
-    property AnimationDuration: Integer read FAnimationDuration write SetAnimationDuration default 367;
+    property Checked;
+    property Animated;
+    property AnimationDuration;
     property Enabled;
     property TabStop default True;
     property TabOrder;
-    property ShowFocus: Boolean read FShowFocus write SetShowFocus default True;
-    property KeyboardToggle: Boolean read FKeyboardToggle write FKeyboardToggle default True;
+    property ShowFocus;
+    property KeyboardToggle;
     property Color;
     property ParentColor;
-    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property OnChange;
     property OnClick;
-    property TrackFrameColor: TColor read FTrackFrameColor write SetTrackFrameColor default clDefault;
-    property TrackColorOff: TColor read FTrackColorOff write SetTrackColorOff default clDefault;
-    property TrackColorOn: TColor read FTrackColorOn write SetTrackColorOn default clDefault;
-    property ThumbColorOff: TColor read FThumbColorOff write SetThumbColorOff default clDefault;
-    property ThumbColorOn: TColor read FThumbColorOn write SetThumbColorOn default clDefault;
+    property TrackFrameColor;
+    property TrackColorOff;
+    property TrackColorOn;
+    property ThumbColorOff;
+    property ThumbColorOn;
     property Font;
-    property ShowText: Boolean read FShowText write SetShowText default False;
-    property TextOn: string read FTextOn write SetTextOn stored IsTextOnStored;
-    property TextOff: string read FTextOff write SetTextOff stored IsTextOffStored;
-    property TextPosition: TFluentTextPosition read FTextPosition write SetTextPosition default tpRight;
-    property TextSpacing: Integer read FTextSpacing write SetTextSpacing default 12;
-    property ShowHeader: Boolean read FShowHeader write SetShowHeader default False;
-    property HeaderText: string read FHeaderText write SetHeaderText;
-    property HeaderPosition: TFluentHeaderPosition read FHeaderPosition write SetHeaderPosition default hpTop;
-    property HeaderAlignment: TAlignment read FHeaderAlignment write SetHeaderAlignment default taCenter;
-    property HeaderSpacing: Integer read FHeaderSpacing write SetHeaderSpacing default 6;
-    property HeaderFont: TFont read FHeaderFont write SetHeaderFont stored FHeaderFontCustom;
+    property ShowText;
+    property TextOn;
+    property TextOff;
+    property TextPosition;
+    property TextSpacing;
+    property ShowHeader;
+    property HeaderText;
+    property HeaderPosition;
+    property HeaderAlignment;
+    property HeaderSpacing;
+    property HeaderFont;
     property OnContextPopup;
     property OnDblClick;
     property OnEnter;
@@ -393,9 +417,9 @@ begin
   Path.CloseFigure;
 end;
 
-{ TFluentToggleSwitch }
+{ TCustomFluentToggleSwitch }
 
-constructor TFluentToggleSwitch.Create(AOwner: TComponent);
+constructor TCustomFluentToggleSwitch.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   ControlStyle := ControlStyle + [csOpaque];
@@ -436,7 +460,7 @@ begin
   LayoutChanged;
 end;
 
-procedure TFluentToggleSwitch.SetTrackFrameColor(Value: TColor);
+procedure TCustomFluentToggleSwitch.SetTrackFrameColor(Value: TColor);
 begin
   if FTrackFrameColor <> Value then
   begin
@@ -445,7 +469,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTrackColorOff(Value: TColor);
+procedure TCustomFluentToggleSwitch.SetTrackColorOff(Value: TColor);
 begin
   if FTrackColorOff <> Value then
   begin
@@ -454,7 +478,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTrackColorOn(Value: TColor);
+procedure TCustomFluentToggleSwitch.SetTrackColorOn(Value: TColor);
 begin
   if FTrackColorOn <> Value then
   begin
@@ -463,7 +487,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetThumbColorOff(Value: TColor);
+procedure TCustomFluentToggleSwitch.SetThumbColorOff(Value: TColor);
 begin
   if FThumbColorOff <> Value then
   begin
@@ -472,7 +496,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetThumbColorOn(Value: TColor);
+procedure TCustomFluentToggleSwitch.SetThumbColorOn(Value: TColor);
 begin
   if FThumbColorOn <> Value then
   begin
@@ -481,7 +505,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTextOn(const Value: string);
+procedure TCustomFluentToggleSwitch.SetTextOn(const Value: string);
 begin
   if FTextOn <> Value then
   begin
@@ -490,7 +514,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTextOff(const Value: string);
+procedure TCustomFluentToggleSwitch.SetTextOff(const Value: string);
 begin
   if FTextOff <> Value then
   begin
@@ -499,17 +523,17 @@ begin
   end;
 end;
 
-function TFluentToggleSwitch.IsTextOnStored: Boolean;
+function TCustomFluentToggleSwitch.IsTextOnStored: Boolean;
 begin
   Result := FTextOn <> DefaultTextOn;
 end;
 
-function TFluentToggleSwitch.IsTextOffStored: Boolean;
+function TCustomFluentToggleSwitch.IsTextOffStored: Boolean;
 begin
   Result := FTextOff <> DefaultTextOff;
 end;
 
-procedure TFluentToggleSwitch.SetShowFocus(Value: Boolean);
+procedure TCustomFluentToggleSwitch.SetShowFocus(Value: Boolean);
 begin
   if FShowFocus <> Value then
   begin
@@ -521,12 +545,12 @@ end;
 
 // Windows hides focus rings until someone reaches for the keyboard, and says so
 // through the UI state of the window
-function TFluentToggleSwitch.FocusRingWanted: Boolean;
+function TCustomFluentToggleSwitch.FocusRingWanted: Boolean;
 begin
   Result := FShowFocus and Focused and (Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEFOCUS = 0);
 end;
 
-procedure TFluentToggleSwitch.SetShowText(Value: Boolean);
+procedure TCustomFluentToggleSwitch.SetShowText(Value: Boolean);
 begin
   if FShowText <> Value then
   begin
@@ -535,7 +559,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTextPosition(Value: TFluentTextPosition);
+procedure TCustomFluentToggleSwitch.SetTextPosition(Value: TFluentTextPosition);
 begin
   if FTextPosition <> Value then
   begin
@@ -544,7 +568,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetTextSpacing(Value: Integer);
+procedure TCustomFluentToggleSwitch.SetTextSpacing(Value: Integer);
 begin
   if Value < 0 then
     Value := 0;
@@ -555,7 +579,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetShowHeader(Value: Boolean);
+procedure TCustomFluentToggleSwitch.SetShowHeader(Value: Boolean);
 begin
   if FShowHeader <> Value then
   begin
@@ -564,7 +588,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetHeaderText(const Value: string);
+procedure TCustomFluentToggleSwitch.SetHeaderText(const Value: string);
 begin
   if FHeaderText <> Value then
   begin
@@ -573,7 +597,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetHeaderPosition(Value: TFluentHeaderPosition);
+procedure TCustomFluentToggleSwitch.SetHeaderPosition(Value: TFluentHeaderPosition);
 begin
   if FHeaderPosition <> Value then
   begin
@@ -582,7 +606,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetHeaderAlignment(Value: TAlignment);
+procedure TCustomFluentToggleSwitch.SetHeaderAlignment(Value: TAlignment);
 begin
   if FHeaderAlignment <> Value then
   begin
@@ -591,18 +615,18 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.SetHeaderFont(Value: TFont);
+procedure TCustomFluentToggleSwitch.SetHeaderFont(Value: TFont);
 begin
   FHeaderFont.Assign(Value);
 end;
 
-procedure TFluentToggleSwitch.HeaderFontChanged(Sender: TObject);
+procedure TCustomFluentToggleSwitch.HeaderFontChanged(Sender: TObject);
 begin
   FHeaderFontCustom := True;
   LayoutChanged;
 end;
 
-procedure TFluentToggleSwitch.SetHeaderSpacing(Value: Integer);
+procedure TCustomFluentToggleSwitch.SetHeaderSpacing(Value: Integer);
 begin
   if Value < 0 then
     Value := 0;
@@ -613,7 +637,7 @@ begin
   end;
 end;
 
-function TFluentToggleSwitch.CurrentScale: Single;
+function TCustomFluentToggleSwitch.CurrentScale: Single;
 var
   PPI: Integer;
   Above: TWinControl;
@@ -633,24 +657,24 @@ begin
   Result := PPI / USER_DEFAULT_SCREEN_DPI * FUserScale;
 end;
 
-function TFluentToggleSwitch.TextGap: Integer;
+function TCustomFluentToggleSwitch.TextGap: Integer;
 begin
   Result := Round((FTextSpacing - (TrackAreaWidth - TrackWidth) / 2) * CurrentScale);
   if Result < 0 then
     Result := 0;
 end;
 
-function TFluentToggleSwitch.HeaderGap: Integer;
+function TCustomFluentToggleSwitch.HeaderGap: Integer;
 begin
   Result := Round(FHeaderSpacing * CurrentScale);
 end;
 
-function TFluentToggleSwitch.HeaderBand: Integer;
+function TCustomFluentToggleSwitch.HeaderBand: Integer;
 begin
   Result := FHeaderHeight + HeaderGap;
 end;
 
-procedure TFluentToggleSwitch.Measure;
+procedure TCustomFluentToggleSwitch.Measure;
 var
   DC: HDC;
   SaveFont: HFONT;
@@ -691,7 +715,7 @@ begin
   end;
 end;
 
-function TFluentToggleSwitch.CanAutoSize(var NewWidth, NewHeight: Integer): Boolean;
+function TCustomFluentToggleSwitch.CanAutoSize(var NewWidth, NewHeight: Integer): Boolean;
 begin
   Result := True;
   NewWidth := BlockWidth;
@@ -707,7 +731,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.AdjustSize;
+procedure TCustomFluentToggleSwitch.AdjustSize;
 var
   W, H: Integer;
 begin
@@ -725,7 +749,7 @@ end;
 
 // Not taken from SwitchArea: that reads ClientRect, and reading it creates the window,
 // which the constructor must not do before there is a parent to create it in
-function TFluentToggleSwitch.TopBand: Integer;
+function TCustomFluentToggleSwitch.TopBand: Integer;
 begin
   if FShowHeader and (FHeaderPosition = hpTop) then
     Result := HeaderBand
@@ -733,14 +757,14 @@ begin
     Result := 0;
 end;
 
-function TFluentToggleSwitch.BlockWidth: Integer;
+function TCustomFluentToggleSwitch.BlockWidth: Integer;
 begin
   Result := Round(TrackAreaWidth * CurrentScale);
   if FShowText then
     Inc(Result, TextGap + FTextWidth);
 end;
 
-function TFluentToggleSwitch.SwitchIndent: Integer;
+function TCustomFluentToggleSwitch.SwitchIndent: Integer;
 var
   Extra: Integer;
 begin
@@ -760,7 +784,7 @@ begin
   end;
 end;
 
-function TFluentToggleSwitch.SwitchArea: TRect;
+function TCustomFluentToggleSwitch.SwitchArea: TRect;
 var
   Band: Integer;
 begin
@@ -779,7 +803,7 @@ end;
 
 // Where Paint puts the top of the label. The designer wants a baseline, and turns this into one
 // with the ascent of its own reckoning, which sits a row below the one GDI draws on
-function TFluentToggleSwitch.TextTop: Integer;
+function TCustomFluentToggleSwitch.TextTop: Integer;
 var
   Area: TRect;
 begin
@@ -787,7 +811,7 @@ begin
   Result := Area.Top + (Area.Height - FTextHeight) div 2;
 end;
 
-procedure TFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
+procedure TCustomFluentToggleSwitch.LayoutChanged(MoveWithTheHeader: Boolean = False);
 var
   Band, Indent: Integer;
 begin
@@ -816,7 +840,7 @@ begin
   Invalidate;
 end;
 
-procedure TFluentToggleSwitch.SetName(const Value: TComponentName);
+procedure TCustomFluentToggleSwitch.SetName(const Value: TComponentName);
 var
   Seed: Boolean;
 begin
@@ -828,7 +852,7 @@ begin
     HeaderText := Value;
 end;
 
-procedure TFluentToggleSwitch.CMFontChanged(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.CMFontChanged(var Msg: TMessage);
 begin
   inherited;
   if not FHeaderFontCustom then
@@ -843,7 +867,7 @@ begin
   LayoutChanged;
 end;
 
-procedure TFluentToggleSwitch.ChangeScale(M, D: Integer; isDpiChange: Boolean);
+procedure TCustomFluentToggleSwitch.ChangeScale(M, D: Integer; isDpiChange: Boolean);
 begin
   FScaling := True;
   try
@@ -862,13 +886,13 @@ begin
   LayoutChanged;
 end;
 
-procedure TFluentToggleSwitch.Loaded;
+procedure TCustomFluentToggleSwitch.Loaded;
 begin
   inherited;
   LayoutChanged;
 end;
 
-procedure TFluentToggleSwitch.CreateWnd;
+procedure TCustomFluentToggleSwitch.CreateWnd;
 begin
   inherited;
   LayoutChanged;
@@ -881,7 +905,7 @@ begin
   end;
 end;
 
-destructor TFluentToggleSwitch.Destroy;
+destructor TCustomFluentToggleSwitch.Destroy;
 begin
   if FGone <> nil then
     FGone^ := True;
@@ -889,7 +913,7 @@ begin
   inherited;
 end;
 
-procedure TFluentToggleSwitch.SetChecked(Value: Boolean);
+procedure TCustomFluentToggleSwitch.SetChecked(Value: Boolean);
 begin
   if FChecked = Value then
     Exit;
@@ -902,25 +926,25 @@ begin
     Change;
 end;
 
-procedure TFluentToggleSwitch.Click;
+procedure TCustomFluentToggleSwitch.Click;
 begin
   if FReportingClick then
     inherited;
 end;
 
-procedure TFluentToggleSwitch.Change;
+procedure TCustomFluentToggleSwitch.Change;
 begin
   if Assigned(FOnChange) then
     FOnChange(Self);
 end;
 
 // The system call goes last, behind the checks that cost a tick
-function TFluentToggleSwitch.CanAnimate: Boolean;
+function TCustomFluentToggleSwitch.CanAnimate: Boolean;
 begin
   Result := FAnimated and HandleAllocated and Showing and SystemAnimationsOn;
 end;
 
-procedure TFluentToggleSwitch.StartTimer;
+procedure TCustomFluentToggleSwitch.StartTimer;
 begin
   if FAnimating or not HandleAllocated then
     Exit;
@@ -929,7 +953,7 @@ begin
   SetTimer(Handle, AnimationTimerId, AnimationInterval, nil);
 end;
 
-procedure TFluentToggleSwitch.StopTimer;
+procedure TCustomFluentToggleSwitch.StopTimer;
 begin
   if not FAnimating then
     Exit;
@@ -939,7 +963,7 @@ begin
     KillTimer(Handle, AnimationTimerId);
 end;
 
-procedure TFluentToggleSwitch.StartAnimation;
+procedure TCustomFluentToggleSwitch.StartAnimation;
 begin
   FAnimStartProgress := FAnimProgress;
   FSliding := True;
@@ -947,7 +971,7 @@ begin
   StartTimer;
 end;
 
-procedure TFluentToggleSwitch.StartFade;
+procedure TCustomFluentToggleSwitch.StartFade;
 begin
   FFadeFrom := FFadeValue;
   FFadeT := 0;
@@ -955,7 +979,7 @@ begin
   StartTimer;
 end;
 
-procedure TFluentToggleSwitch.SettleThumb;
+procedure TCustomFluentToggleSwitch.SettleThumb;
 begin
   if CanAnimate then
   begin
@@ -969,7 +993,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.AdvanceAnimation;
+procedure TCustomFluentToggleSwitch.AdvanceAnimation;
 var
   Counter: Int64;
   T: Single;
@@ -1029,7 +1053,7 @@ begin
   Invalidate;
 end;
 
-procedure TFluentToggleSwitch.SetAnimationDuration(Value: Integer);
+procedure TCustomFluentToggleSwitch.SetAnimationDuration(Value: Integer);
 begin
   if Value < 1 then
     Value := 1;
@@ -1038,7 +1062,7 @@ end;
 
 // Either event may free the switch, so a local on this stack frame keeps watch.
 // False says there is no switch left to come back to, and whoever nested us hears it too
-function TFluentToggleSwitch.Toggle: Boolean;
+function TCustomFluentToggleSwitch.Toggle: Boolean;
 var
   Gone: Boolean;
   Outer: PBoolean;
@@ -1066,7 +1090,7 @@ begin
   FGone := Outer;
 end;
 
-procedure TFluentToggleSwitch.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TCustomFluentToggleSwitch.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   inherited;
   if (Button = mbLeft) and Enabled and PtInRect(SwitchArea, Point(X, Y)) then
@@ -1086,7 +1110,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TCustomFluentToggleSwitch.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   Flip: Boolean;
 begin
@@ -1120,7 +1144,7 @@ begin
   inherited;
 end;
 
-procedure TFluentToggleSwitch.MouseMove(Shift: TShiftState; X, Y: Integer);
+procedure TCustomFluentToggleSwitch.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
   IsOver: Boolean;
 begin
@@ -1145,7 +1169,7 @@ begin
     DragThumb(X);
 end;
 
-procedure TFluentToggleSwitch.KeyDown(var Key: Word; Shift: TShiftState);
+procedure TCustomFluentToggleSwitch.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited;
 
@@ -1160,7 +1184,7 @@ begin
   end;
 end;
 
-procedure TFluentToggleSwitch.KeyUp(var Key: Word; Shift: TShiftState);
+procedure TCustomFluentToggleSwitch.KeyUp(var Key: Word; Shift: TShiftState);
 begin
   inherited;
 
@@ -1174,12 +1198,12 @@ begin
   end;
 end;
 
-function TFluentToggleSwitch.DragTravel: Single;
+function TCustomFluentToggleSwitch.DragTravel: Single;
 begin
   Result := (ThumbCenterOnX[isPressed] - ThumbCenterOffX[isPressed]) * CurrentScale;
 end;
 
-procedure TFluentToggleSwitch.DragThumb(X: Integer);
+procedure TCustomFluentToggleSwitch.DragThumb(X: Integer);
 var
   Delta: Single;
 begin
@@ -1205,7 +1229,7 @@ begin
 end;
 
 // No press in flight means nothing to drop, and MouseUp has already settled the ones the system cancels
-procedure TFluentToggleSwitch.CancelPress;
+procedure TCustomFluentToggleSwitch.CancelPress;
 begin
   if not FPressed then
     Exit;
@@ -1217,7 +1241,7 @@ begin
 end;
 
 // The system takes the gesture back, so the button up TControl synthesises next finds nothing to act on
-procedure TFluentToggleSwitch.WMCancelMode(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.WMCancelMode(var Msg: TMessage);
 begin
   CancelPress;
   UpdateVisualState;
@@ -1226,7 +1250,7 @@ end;
 
 // MouseMove raises the hover, by the area the pointer answers for; once the pointer is gone
 // no move will come, so dropping it is left to here
-procedure TFluentToggleSwitch.CMMouseLeave(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.CMMouseLeave(var Msg: TMessage);
 begin
   inherited;
   FHovered := False;
@@ -1235,13 +1259,13 @@ begin
   UpdateVisualState;
 end;
 
-procedure TFluentToggleSwitch.WMSetFocus(var Msg: TWMSetFocus);
+procedure TCustomFluentToggleSwitch.WMSetFocus(var Msg: TWMSetFocus);
 begin
   inherited;
   Invalidate;
 end;
 
-procedure TFluentToggleSwitch.WMKillFocus(var Msg: TWMKillFocus);
+procedure TCustomFluentToggleSwitch.WMKillFocus(var Msg: TWMKillFocus);
 begin
   inherited;
   if FKeyPressed then
@@ -1252,7 +1276,7 @@ begin
   Invalidate;
 end;
 
-procedure TFluentToggleSwitch.WMTimer(var Msg: TWMTimer);
+procedure TCustomFluentToggleSwitch.WMTimer(var Msg: TWMTimer);
 begin
   if Msg.TimerID = AnimationTimerId then
     AdvanceAnimation
@@ -1260,7 +1284,7 @@ begin
     inherited;
 end;
 
-procedure TFluentToggleSwitch.WMUpdateUIState(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.WMUpdateUIState(var Msg: TMessage);
 begin
   inherited;
   // The ring may have just been shown or hidden for the whole window
@@ -1269,7 +1293,7 @@ begin
 end;
 
 // Each instance keeps its own baseline, because OnTrackFill is shared and a sibling may have refreshed it first
-procedure TFluentToggleSwitch.RereadAccent;
+procedure TCustomFluentToggleSwitch.RereadAccent;
 var
   Before: ARGB;
 begin
@@ -1280,19 +1304,19 @@ begin
     Invalidate;
 end;
 
-procedure TFluentToggleSwitch.CMSysColorChange(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.CMSysColorChange(var Msg: TMessage);
 begin
   inherited;
   RereadAccent;
 end;
 
-procedure TFluentToggleSwitch.CMWinIniChange(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.CMWinIniChange(var Msg: TMessage);
 begin
   inherited;
   RereadAccent;
 end;
 
-procedure TFluentToggleSwitch.CMEnabledChanged(var Msg: TMessage);
+procedure TCustomFluentToggleSwitch.CMEnabledChanged(var Msg: TMessage);
 begin
   inherited;
   if not Enabled then
@@ -1304,7 +1328,7 @@ begin
   UpdateVisualState;
 end;
 
-function TFluentToggleSwitch.GetInteractionState: TFluentInteractionState;
+function TCustomFluentToggleSwitch.GetInteractionState: TFluentInteractionState;
 begin
   if not Enabled then
     Result := isDisabled
@@ -1318,7 +1342,7 @@ begin
         Result := isNormal;
 end;
 
-function TFluentToggleSwitch.StateVisual(S: TFluentInteractionState): TFluentVisualState;
+function TCustomFluentToggleSwitch.StateVisual(S: TFluentInteractionState): TFluentVisualState;
 var
   K: Single;
 begin
@@ -1333,7 +1357,7 @@ begin
   Result.ThumbOff  := OffThumbFill[S];
 end;
 
-function TFluentToggleSwitch.CurrentVisual: TFluentVisualState;
+function TCustomFluentToggleSwitch.CurrentVisual: TFluentVisualState;
 begin
   Result := StateVisual(FState);
 
@@ -1341,7 +1365,7 @@ begin
     Result := LerpVisual(FStateFrom, Result, FStateT);
 end;
 
-procedure TFluentToggleSwitch.UpdateVisualState;
+procedure TCustomFluentToggleSwitch.UpdateVisualState;
 var
   NewState: TFluentInteractionState;
 begin
@@ -1362,7 +1386,7 @@ begin
   Invalidate;
 end;
 
-procedure TFluentToggleSwitch.Paint;
+procedure TCustomFluentToggleSwitch.Paint;
 var
   G: TGPGraphics;
   Path: TGPGraphicsPath;
