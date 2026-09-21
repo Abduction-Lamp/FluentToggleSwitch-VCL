@@ -210,6 +210,12 @@ type
     procedure Accelerator_WithoutHeader_ShouldNotAnswer;
 
     [Test]
+    procedure Accelerator_TabStopOff_ShouldToggleWithoutFocus;
+
+    [Test]
+    procedure Freed_InOnEnter_FromTheAccelerator_ShouldNotComeBackTo;
+
+    [Test]
     procedure DragPastMiddle_ShouldTurnOnAndFireOnChange;
 
     [Test]
@@ -1374,6 +1380,37 @@ begin
   Assert.IsTrue(FToggle.Perform(CM_DIALOGCHAR, Ord('H'), 0) = 0,
     'A header that is not shown marks nothing');
   Assert.IsFalse(FToggle.Checked, 'and the switch stays as it was');
+end;
+
+// The focus half of the accelerator follows the rule the click follows, where
+// TabStop decides whether the switch takes the focus at all
+procedure TToggleSwitchTest.Accelerator_TabStopOff_ShouldToggleWithoutFocus;
+begin
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := '&Header';
+  FToggle.TabStop := False;
+  ShowTheForm;
+  FToggle.Perform(CM_DIALOGCHAR, Ord('H'), 0);
+  Assert.IsFalse(FToggle.Focused, 'A switch out of the tab order does not take the focus');
+  Assert.IsTrue(FToggle.Checked, 'but the letter still works it, the way a click does');
+end;
+
+// Taking the focus runs OnExit on the control leaving it and OnEnter on the one
+// arriving, and either handler is free to free the switch under our feet
+procedure TToggleSwitchTest.Freed_InOnEnter_FromTheAccelerator_ShouldNotComeBackTo;
+var
+  Doomed: TFluentToggleSwitch;
+begin
+  ShowTheForm;
+  Doomed := NewDoomedSwitch;
+  Doomed.ShowHeader := True;
+  Doomed.HeaderText := '&Doomed';
+  Doomed.OnEnter := FreeTheSender;
+  Assert.WillNotRaise(
+    procedure
+    begin
+      Doomed.Perform(CM_DIALOGCHAR, Ord('D'), 0);
+    end, nil, 'The switch survives being freed by the focus its accelerator took');
 end;
 
 procedure TToggleSwitchTest.DragPastMiddle_ShouldTurnOnAndFireOnChange;

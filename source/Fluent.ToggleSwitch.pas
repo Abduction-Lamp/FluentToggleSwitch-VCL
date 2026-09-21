@@ -1133,6 +1133,11 @@ var
   Gone: Boolean;
   Outer: PBoolean;
 begin
+  // The one place the value changes at the user's hand, so the one place
+  // read-only has to close. The switch is still here either way
+  if FReadOnly then
+    Exit(True);
+
   Gone := False;
   Outer := FGone;
   FGone := @Gone;
@@ -1346,19 +1351,45 @@ begin
 end;
 
 // An ampersand in the header marks the accelerator, and Alt plus that letter
-// works the switch as if it had been clicked
+// works the switch as if it had been clicked: the focus goes where a click
+// would send it, and the value changes where a click would change it
 procedure TCustomFluentToggleSwitch.CMDialogChar(var Msg: TCMDialogChar);
+var
+  Flip: Boolean;
+  Gone: Boolean;
+  Outer: PBoolean;
 begin
-  if FShowHeader and Enabled and CanFocus and IsAccel(Msg.CharCode, FHeaderText) then
+  if not (FShowHeader and CanFocus and IsAccel(Msg.CharCode, FHeaderText)) then
   begin
-    SetFocus;
-    Msg.Result := 1;
-    // Last statement on purpose: a handler is free to free the switch
-    if FKeyboardToggle and not FReadOnly then
-      Toggle;
-  end
-  else
     inherited;
+    Exit;
+  end;
+
+  Flip := FKeyboardToggle;
+  Msg.Result := 1;
+
+  if TabStop and not (csDesigning in ComponentState) then
+  begin
+    // Taking the focus can run an OnExit or an OnEnter, and either is free to
+    // free the switch
+    Gone := False;
+    Outer := FGone;
+    FGone := @Gone;
+    SetFocus;
+
+    if Gone then
+    begin
+      if Outer <> nil then
+        Outer^ := True;
+      Exit;
+    end;
+
+    FGone := Outer;
+  end;
+
+  // Last statement on purpose: a handler is free to free the switch
+  if Flip then
+    Toggle;
 end;
 
 procedure TCustomFluentToggleSwitch.WMTimer(var Msg: TWMTimer);
