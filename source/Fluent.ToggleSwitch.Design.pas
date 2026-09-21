@@ -47,7 +47,7 @@ end;
 function TFluentToggleSwitchGuidelines.GetDesignerGuideOffset(Index: Integer): Integer;
 begin
   if Index >= inherited GetCount then
-    Result := TFluentToggleSwitch(Component).TextTop + GetTextBaseline(TControl(Component), tlTop)
+    Result := TCustomFluentToggleSwitch(Component).TextTop + GetTextBaseline(TControl(Component), tlTop)
   else
     Result := inherited GetDesignerGuideOffset(Index);
 end;
@@ -55,7 +55,9 @@ end;
 procedure Register;
 begin
   RegisterComponents('Fluent', [TFluentToggleSwitch]);
-  RegisterComponentGuidelines(TFluentToggleSwitch, TFluentToggleSwitchGuidelines);
+  // Registered against the ancestor, so a component derived from it keeps the
+  // baseline the guidelines class reads out of TextTop
+  RegisterComponentGuidelines(TCustomFluentToggleSwitch, TFluentToggleSwitchGuidelines);
 end;
 
 end.
