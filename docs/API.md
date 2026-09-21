@@ -3,8 +3,14 @@
 Version 2.0.0. Unit `Fluent.ToggleSwitch`, palette page **Fluent**.
 
 ```
-TComponent → TControl → TWinControl → TCustomControl → TFluentToggleSwitch
+TComponent → TControl → TWinControl → TCustomControl →
+TCustomFluentToggleSwitch → TFluentToggleSwitch
 ```
+
+`TCustomFluentToggleSwitch` carries the implementation and publishes nothing;
+`TFluentToggleSwitch` publishes the properties described here. A component
+descending from the custom class chooses for itself what to publish and what to
+leave out.
 
 The switch draws itself with GDI+ and depends on nothing but the RTL, the VCL
 and GDI+. It works the same on Windows 7, 8, 10 and 11, because it asks the
@@ -84,6 +90,23 @@ keyboard, paints itself in paler colours and greys its caption and header.
 
 Disabling it in the middle of a gesture drops that gesture: the thumb returns
 to the value the switch held, and neither event is raised.
+
+### `ReadOnly: Boolean`
+
+Default `False`. Whether the switch shows a value the user may not change.
+
+A read-only switch answers neither the pointer nor the space bar, and its thumb
+cannot be dragged. `Checked` set from code works as always and still raises
+`OnChange`.
+
+This is not `Enabled := False`. The switch keeps its normal colours, stays in
+the tab order and still takes the focus when clicked — it is a value on display,
+not a control out of service. Since nothing the user does reaches it, there is
+no hover highlight and no pressed state, and `OnClick`, which reports a switch
+that changed, does not fire.
+
+Turning it on in the middle of a gesture drops that gesture, the same way
+`Enabled := False` does.
 
 ### `KeyboardToggle: Boolean`
 
@@ -426,4 +449,4 @@ Each of these has an issue of its own.
 | Right-to-left layout, though `BiDiMode` is published | [#12](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/12) |
 | Accessibility: the switch reports neither role nor state to a screen reader | [#13](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/13) |
 | A header outside the control's own window, as `TLabeledEdit` has | [#14](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/14) |
-| `ReadOnly`, a way back to following `Font` for the header, an accelerator in the header, and a `TCustom` ancestor to derive from | [#15](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/15) |
+| A way back to following `Font` for the header, and an accelerator in it | [#15](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/15) |

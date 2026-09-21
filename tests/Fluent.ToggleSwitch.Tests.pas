@@ -156,6 +156,27 @@ type
     procedure KeyboardToggle_False_Space_ShouldNotToggle;
 
     [Test]
+    procedure DefaultReadOnly_ShouldBeFalse;
+
+    [Test]
+    procedure ReadOnly_Click_ShouldNotToggle;
+
+    [Test]
+    procedure ReadOnly_Space_ShouldNotToggle;
+
+    [Test]
+    procedure ReadOnly_Drag_ShouldNotToggle;
+
+    [Test]
+    procedure ReadOnly_SetWhilePressed_ShouldDropThePress;
+
+    [Test]
+    procedure ReadOnly_Checked_ShouldStillBeSetFromCode;
+
+    [Test]
+    procedure ReadOnly_Hover_ShouldNotLightTheSwitch;
+
+    [Test]
     procedure TabStop_ShouldBeTrueByDefault;
 
     [Test]
@@ -1111,6 +1132,85 @@ begin
   Assert.IsFalse(FOnChangeFired, 'and fires nothing');
 end;
 
+procedure TToggleSwitchTest.DefaultReadOnly_ShouldBeFalse;
+begin
+  Assert.IsFalse(FToggle.ReadOnly);
+end;
+
+// Read-only is not Enabled := False: the switch keeps its colours and still
+// takes the focus, it just stops answering the user
+procedure TToggleSwitchTest.ReadOnly_Click_ShouldNotToggle;
+begin
+  FToggle.ReadOnly := True;
+  FOnChangeFired := False;
+  FOnClickCount := 0;
+  FToggle.OnChange := HandleOnChange;
+  FToggle.OnClick := HandleOnClick;
+  Press(ThumbOffX);
+  Release(ThumbOffX);
+  Assert.IsFalse(FToggle.Checked, 'A click on a read-only switch leaves it alone');
+  Assert.IsFalse(FOnChangeFired, 'and fires no OnChange');
+  Assert.AreEqual(0, FOnClickCount, 'and no OnClick');
+end;
+
+procedure TToggleSwitchTest.ReadOnly_Space_ShouldNotToggle;
+begin
+  FToggle.ReadOnly := True;
+  FOnChangeFired := False;
+  FToggle.OnChange := HandleOnChange;
+  PressKey(VK_SPACE);
+  ReleaseKey(VK_SPACE);
+  Assert.IsFalse(FToggle.Checked, 'The keyboard is closed too');
+  Assert.IsFalse(FOnChangeFired, 'and fires nothing');
+end;
+
+procedure TToggleSwitchTest.ReadOnly_Drag_ShouldNotToggle;
+begin
+  FToggle.ReadOnly := True;
+  Press(ThumbOffX);
+  MoveTo(ThumbOffX + DragTravel div 2 + 1);
+  Release(ThumbOffX + DragTravel div 2 + 1);
+  Assert.IsFalse(FToggle.Checked, 'and so is the thumb');
+end;
+
+// Turning it on mid-gesture: the press already made must not act on the release
+procedure TToggleSwitchTest.ReadOnly_SetWhilePressed_ShouldDropThePress;
+begin
+  Press(ThumbOffX);
+  FToggle.ReadOnly := True;
+  Release(ThumbOffX);
+  Assert.IsFalse(FToggle.Checked, 'The press is dropped, not held for the release');
+end;
+
+procedure TToggleSwitchTest.ReadOnly_Checked_ShouldStillBeSetFromCode;
+begin
+  FToggle.ReadOnly := True;
+  FOnChangeFired := False;
+  FToggle.OnChange := HandleOnChange;
+  FToggle.Checked := True;
+  Assert.IsTrue(FToggle.Checked, 'Read-only stops the user, not the program');
+  Assert.IsTrue(FOnChangeFired, 'and OnChange still reports the change');
+end;
+
+procedure TToggleSwitchTest.ReadOnly_Hover_ShouldNotLightTheSwitch;
+var
+  Idle, Hovered: TBitmap;
+begin
+  FToggle.ReadOnly := True;
+  Idle := nil;
+  Hovered := nil;
+  try
+    Idle := RenderToBitmap(FToggle);
+    HoverAt(ThumbOffX, FToggle.Height div 2);
+    Hovered := RenderToBitmap(FToggle);
+    Assert.AreEqual('', DescribeDifference(Idle, Hovered),
+      'A highlight under the pointer promises a switch that answers');
+  finally
+    Hovered.Free;
+    Idle.Free;
+  end;
+end;
+
 procedure TToggleSwitchTest.TabStop_ShouldBeTrueByDefault;
 begin
   Assert.IsTrue(FToggle.TabStop, 'Tab reaches the switch like any other control');
@@ -1999,22 +2099,23 @@ end;
 // that list. Streaming covers the switch's own properties; this covers the rest
 procedure TToggleSwitchTest.PublishedApi_ShouldListEveryProperty;
 const
-  Expected: array[0..59] of string = (
+  Expected: array[0..60] of string = (
     'Align', 'AlignWithMargins', 'Anchors', 'AutoSize',
     'BiDiMode', 'Constraints', 'Cursor', 'DoubleBuffered',
     'Hint', 'Margins', 'ParentBiDiMode', 'ParentDoubleBuffered',
     'ParentFont', 'ParentShowHint', 'PopupMenu', 'ShowHint',
-    'Visible', 'Checked', 'Animated', 'AnimationDuration',
-    'Enabled', 'TabStop', 'TabOrder', 'ShowFocus',
-    'KeyboardToggle', 'Color', 'ParentColor', 'OnChange',
-    'OnClick', 'TrackFrameColor', 'TrackColorOff', 'TrackColorOn',
-    'ThumbColorOff', 'ThumbColorOn', 'Font', 'ShowText',
-    'TextOn', 'TextOff', 'TextPosition', 'TextSpacing',
-    'ShowHeader', 'HeaderText', 'HeaderPosition', 'HeaderAlignment',
-    'HeaderSpacing', 'HeaderFont', 'OnContextPopup', 'OnDblClick',
-    'OnEnter', 'OnExit', 'OnMouseDown', 'OnMouseEnter',
-    'OnMouseLeave', 'OnMouseMove', 'OnMouseUp', 'OnMouseWheel',
-    'OnKeyDown', 'OnKeyPress', 'OnKeyUp', 'OnResize');
+    'Visible', 'Checked', 'ReadOnly', 'Animated',
+    'AnimationDuration', 'Enabled', 'TabStop', 'TabOrder',
+    'ShowFocus', 'KeyboardToggle', 'Color', 'ParentColor',
+    'OnChange', 'OnClick', 'TrackFrameColor', 'TrackColorOff',
+    'TrackColorOn', 'ThumbColorOff', 'ThumbColorOn', 'Font',
+    'ShowText', 'TextOn', 'TextOff', 'TextPosition',
+    'TextSpacing', 'ShowHeader', 'HeaderText', 'HeaderPosition',
+    'HeaderAlignment', 'HeaderSpacing', 'HeaderFont', 'OnContextPopup',
+    'OnDblClick', 'OnEnter', 'OnExit', 'OnMouseDown',
+    'OnMouseEnter', 'OnMouseLeave', 'OnMouseMove', 'OnMouseUp',
+    'OnMouseWheel', 'OnKeyDown', 'OnKeyPress', 'OnKeyUp',
+    'OnResize');
 var
   I: Integer;
 begin
@@ -2118,6 +2219,7 @@ var
   Loaded: TFluentToggleSwitch;
 begin
   FToggle.Checked := True;
+  FToggle.ReadOnly := True;
   FToggle.Animated := False;
   FToggle.AnimationDuration := 100;
   FToggle.TabStop := False;
@@ -2143,6 +2245,7 @@ begin
   try
     CopyThroughStream(FToggle, Loaded);
     Assert.IsTrue(Loaded.Checked, 'Checked');
+    Assert.IsTrue(Loaded.ReadOnly, 'ReadOnly');
     Assert.IsFalse(Loaded.Animated, 'Animated');
     Assert.AreEqual(100, Loaded.AnimationDuration, 'AnimationDuration');
     Assert.IsFalse(Loaded.TabStop, 'TabStop');
