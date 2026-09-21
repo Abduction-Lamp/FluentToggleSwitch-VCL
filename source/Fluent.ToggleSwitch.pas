@@ -127,6 +127,7 @@ type
     procedure SetShowText(Value: Boolean);
     procedure SetShowFocus(Value: Boolean);
     function FocusRingWanted: Boolean;
+    function UICueHidden(Flag: Cardinal): Boolean;
     procedure SetTextPosition(Value: TFluentTextPosition);
     procedure SetTextSpacing(Value: Integer);
     procedure SetShowHeader(Value: Boolean);
@@ -556,11 +557,16 @@ begin
   end;
 end;
 
-// Windows hides focus rings until someone reaches for the keyboard, and says so
-// through the UI state of the window
 function TCustomFluentToggleSwitch.FocusRingWanted: Boolean;
 begin
-  Result := FShowFocus and Focused and (Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEFOCUS = 0);
+  Result := FShowFocus and Focused and not UICueHidden(UISF_HIDEFOCUS);
+end;
+
+// Windows hides focus rings and accelerator underlines until someone reaches
+// for the keyboard, and says so through the UI state of the window
+function TCustomFluentToggleSwitch.UICueHidden(Flag: Cardinal): Boolean;
+begin
+  Result := Perform(WM_QUERYUISTATE, 0, 0) and Flag <> 0;
 end;
 
 procedure TCustomFluentToggleSwitch.SetShowText(Value: Boolean);
@@ -712,12 +718,10 @@ begin
   Result := Round(FHeaderSpacing * CurrentScale);
 end;
 
-// Windows keeps the underline of an accelerator hidden until Alt is pressed,
-// the same way it hides the focus ring
 function TCustomFluentToggleSwitch.HeaderFormat: TTextFormat;
 begin
   Result := [tfSingleLine, tfNoClip];
-  if Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEACCEL <> 0 then
+  if UICueHidden(UISF_HIDEACCEL) then
     Include(Result, tfHidePrefix);
 end;
 
