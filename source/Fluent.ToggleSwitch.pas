@@ -650,7 +650,7 @@ begin
     Exit;
 
   FParentHeaderFont := Value;
-  if FParentHeaderFont then
+  if FParentHeaderFont and not (csLoading in ComponentState) then
   begin
     CopyFontToHeader;
     LayoutChanged;
