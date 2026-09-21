@@ -213,7 +213,7 @@ type
     procedure Accelerator_TabStopOff_ShouldToggleWithoutFocus;
 
     [Test]
-    procedure Freed_InOnEnter_FromTheAccelerator_ShouldNotComeBackTo;
+    procedure Freed_InOnChange_FromTheAccelerator_ShouldNotComeBackTo;
 
     [Test]
     procedure DragPastMiddle_ShouldTurnOnAndFireOnChange;
@@ -1395,9 +1395,10 @@ begin
   Assert.IsTrue(FToggle.Checked, 'but the letter still works it, the way a click does');
 end;
 
-// Taking the focus runs OnExit on the control leaving it and OnEnter on the one
-// arriving, and either handler is free to free the switch under our feet
-procedure TToggleSwitchTest.Freed_InOnEnter_FromTheAccelerator_ShouldNotComeBackTo;
+// The accelerator ends in a toggle, and a toggle reports itself to handlers
+// that are free to free the switch, so Toggle has to be the last thing the
+// accelerator does
+procedure TToggleSwitchTest.Freed_InOnChange_FromTheAccelerator_ShouldNotComeBackTo;
 var
   Doomed: TFluentToggleSwitch;
 begin
@@ -1405,12 +1406,12 @@ begin
   Doomed := NewDoomedSwitch;
   Doomed.ShowHeader := True;
   Doomed.HeaderText := '&Doomed';
-  Doomed.OnEnter := FreeTheSender;
+  Doomed.OnChange := FreeTheSender;
   Assert.WillNotRaise(
     procedure
     begin
       Doomed.Perform(CM_DIALOGCHAR, Ord('D'), 0);
-    end, nil, 'The switch survives being freed by the focus its accelerator took');
+    end, nil, 'The switch survives being freed by the change its accelerator made');
 end;
 
 procedure TToggleSwitchTest.DragPastMiddle_ShouldTurnOnAndFireOnChange;
