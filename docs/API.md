@@ -207,6 +207,12 @@ work the switch. Two of them, `Sound && vibration`, draw one. The underline
 stays hidden until Alt is pressed, the convention Windows sets for the whole
 window. See [Keyboard and focus](#keyboard-and-focus).
 
+Only the first ampersand in the string decides the letter. The VCL picks it
+with `IsAccel`, which looks no further, so a literal `&&` placed ahead of the
+marked letter leaves that letter underlined and out of Alt's reach. Every VCL
+caption behaves this way; put the accelerator before the literal ampersand, or
+leave one of the two out.
+
 ### `HeaderPosition: TFluentHeaderPosition`
 
 Default `hpTop`. Above the switch or below it.
@@ -225,8 +231,8 @@ header and the row holding the switch. Negative values are raised to zero.
 ### `HeaderFont: TFont`
 
 Follows `Font` until you assign to it, and from then on stands on its own,
-including through a change of scale. It is written to a DFM only once it has
-been assigned to.
+including through a change of scale. It is written to a DFM whenever
+`ParentHeaderFont` is `False` — which is what assigning to it brings about.
 
 ### `ParentHeaderFont: Boolean`
 
@@ -346,10 +352,12 @@ is left for whatever else wants it. Enter does nothing, as in WinUI.
 Clicking the switch gives it the focus, unless `TabStop` is off.
 
 Alt plus the letter marked in `HeaderText` gives the switch the focus and
-toggles it, the way an accelerator works a check box. It toggles only when the
-keyboard may change the value: with `KeyboardToggle` off or `ReadOnly` on it
-carries the focus over and stops there. A header that is not shown marks
-nothing, whatever `HeaderText` holds.
+toggles it, the way an accelerator works a check box. Both halves follow the
+rules a click follows: the value changes only where the keyboard may change it,
+so `KeyboardToggle` off or `ReadOnly` on leaves the switch as it was, and the
+focus is taken only where a click would take it, so `TabStop` off means the
+switch toggles without it. A header that is not shown marks nothing, whatever
+`HeaderText` holds.
 
 The focus ring follows the convention Windows sets: it stays hidden until
 someone navigates by keyboard, and the window says which of the two it is. A
