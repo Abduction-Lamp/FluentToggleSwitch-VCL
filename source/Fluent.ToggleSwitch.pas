@@ -35,6 +35,7 @@ type
   TCustomFluentToggleSwitch = class(TCustomControl)
   private
     FChecked: Boolean;
+    FReadOnly: Boolean;
 
     FAnimated: Boolean;
     FAnimationDuration: Integer;
@@ -91,6 +92,7 @@ type
     FHeaderHeight: Integer;
 
     procedure SetChecked(Value: Boolean);
+    procedure SetReadOnly(Value: Boolean);
     procedure SetAnimationDuration(Value: Integer);
     function CanAnimate: Boolean;
     procedure StartTimer;
@@ -168,6 +170,7 @@ type
     procedure KeyUp(var Key: Word; Shift: TShiftState); override;
 
     property Checked: Boolean read FChecked write SetChecked default False;
+    property ReadOnly: Boolean read FReadOnly write SetReadOnly default False;
     property Animated: Boolean read FAnimated write FAnimated default True;
     property AnimationDuration: Integer read FAnimationDuration write SetAnimationDuration default 367;
     property ShowFocus: Boolean read FShowFocus write SetShowFocus default True;
@@ -215,6 +218,7 @@ type
     property ShowHint;
     property Visible;
     property Checked;
+    property ReadOnly;
     property Animated;
     property AnimationDuration;
     property Enabled;
@@ -926,6 +930,24 @@ begin
     Change;
 end;
 
+procedure TCustomFluentToggleSwitch.SetReadOnly(Value: Boolean);
+begin
+  if FReadOnly = Value then
+    Exit;
+
+  FReadOnly := Value;
+
+  // A gesture already under way would otherwise finish on the release
+  if FReadOnly then
+  begin
+    CancelPress;
+    FKeyPressed := False;
+    FHovered := False;
+  end;
+
+  UpdateVisualState;
+end;
+
 procedure TCustomFluentToggleSwitch.Click;
 begin
   if FReportingClick then
@@ -1095,14 +1117,17 @@ begin
   inherited;
   if (Button = mbLeft) and Enabled and PtInRect(SwitchArea, Point(X, Y)) then
   begin
-    FSliding := False;
+    if not FReadOnly then
+    begin
+      FSliding := False;
 
-    FPressed := True;
-    FDragStartX := X;
-    FDragDelta := 0;
-    FDragged := False;
+      FPressed := True;
+      FDragStartX := X;
+      FDragDelta := 0;
+      FDragged := False;
 
-    UpdateVisualState;
+      UpdateVisualState;
+    end;
 
     // Taking the focus can run an OnExit that opens a dialog, and that cancels the press just made
     if TabStop and not (csDesigning in ComponentState) then
@@ -1157,7 +1182,7 @@ begin
     UpdateVisualState;
   end;
 
-  IsOver := PtInRect(SwitchArea, Point(X, Y));
+  IsOver := not FReadOnly and PtInRect(SwitchArea, Point(X, Y));
 
   if IsOver <> FHovered then
   begin
@@ -1173,7 +1198,7 @@ procedure TCustomFluentToggleSwitch.KeyDown(var Key: Word; Shift: TShiftState);
 begin
   inherited;
 
-  if FKeyboardToggle and Enabled and (Key = VK_SPACE) and (Shift = []) then
+  if FKeyboardToggle and Enabled and not FReadOnly and (Key = VK_SPACE) and (Shift = []) then
   begin
     Key := 0;
     if not FKeyPressed then

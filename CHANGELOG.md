@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The next release takes the major number: the rename below breaks every
 installation of 2.1.0.
 
+### Added
+
+- `ReadOnly: Boolean`, default `False`. A read-only switch shows a value the
+  user may not change: the pointer, the space bar and a drag of the thumb are
+  all closed, while `Checked` set from code works as always and still raises
+  `OnChange`. It is not `Enabled := False` — the switch keeps its normal
+  colours, stays in the tab order and still takes the focus when clicked. Since
+  nothing the user does reaches it, there is no hover highlight and no pressed
+  state, and `OnClick`, which reports a switch that changed, does not fire.
+
+- `TCustomFluentToggleSwitch`, the ancestor that carries the implementation.
+  `TFluentToggleSwitch` descends from it and does nothing but publish
+  properties, so a component descending from the custom class can publish its
+  own selection or leave a property out. Code using `TFluentToggleSwitch` is
+  unaffected: the class name, the published properties and the `.dfm` it
+  streams are what they were.
+
 ### Changed
 
 - **Breaking.** A compiled package carries the compiler version in its name:
