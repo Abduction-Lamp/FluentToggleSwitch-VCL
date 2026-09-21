@@ -8,7 +8,6 @@ uses
   System.Types,
 
   Vcl.Controls,
-  Vcl.Forms,
   Vcl.Graphics,
 
   Winapi.Windows,
@@ -273,6 +272,9 @@ type
   end;
 
 implementation
+
+uses
+  Vcl.Forms;
 
 const
   TrackAreaWidth        = 42;
