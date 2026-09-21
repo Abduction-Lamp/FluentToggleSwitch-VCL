@@ -20,6 +20,13 @@ installation of 2.1.0.
   nothing the user does reaches it, there is no hover highlight and no pressed
   state, and `OnClick`, which reports a switch that changed, does not fire.
 
+- An accelerator in the header. An ampersand in `HeaderText` used to be drawn
+  as one; it now marks the letter after it, `&&` draws a literal ampersand, and
+  Alt plus that letter gives the switch the focus and toggles it. It toggles
+  only when the keyboard may change the value, so `KeyboardToggle` off or
+  `ReadOnly` on leaves it at the focus. The underline keeps to the convention
+  Windows sets for the window: hidden until Alt is pressed, like the focus ring.
+
 - `ParentHeaderFont: Boolean`, default `True`. The header font used to follow
   `Font` only until something assigned to `HeaderFont`, and after that there was
   no way back: the flag that remembered it was internal and write-once, so a

@@ -8,6 +8,7 @@ uses
   System.Types,
 
   Vcl.Controls,
+  Vcl.Forms,
   Vcl.Graphics,
 
   Winapi.Windows,
@@ -109,6 +110,7 @@ type
     function TextGap: Integer;
     function HeaderGap: Integer;
     function HeaderBand: Integer;
+    function HeaderFormat: TTextFormat;
     function StateVisual(S: TFluentInteractionState): TFluentVisualState;
     function CurrentVisual: TFluentVisualState;
     procedure UpdateVisualState;
@@ -155,6 +157,7 @@ type
     procedure WMTimer(var Msg: TWMTimer);          message WM_TIMER;
     procedure CMSysColorChange(var Msg: TMessage); message CM_SYSCOLORCHANGE;
     procedure CMWinIniChange(var Msg: TMessage);   message CM_WININICHANGE;
+    procedure CMDialogChar(var Msg: TCMDialogChar); message CM_DIALOGCHAR;
 
   protected
     procedure Paint; override;
@@ -709,6 +712,15 @@ begin
   Result := Round(FHeaderSpacing * CurrentScale);
 end;
 
+// Windows keeps the underline of an accelerator hidden until Alt is pressed,
+// the same way it hides the focus ring
+function TCustomFluentToggleSwitch.HeaderFormat: TTextFormat;
+begin
+  Result := [tfSingleLine, tfNoClip];
+  if Perform(WM_QUERYUISTATE, 0, 0) and UISF_HIDEACCEL <> 0 then
+    Include(Result, tfHidePrefix);
+end;
+
 function TCustomFluentToggleSwitch.HeaderBand: Integer;
 begin
   Result := FHeaderHeight + HeaderGap;
@@ -719,7 +731,8 @@ var
   DC: HDC;
   SaveFont: HFONT;
   TM: TTextMetric;
-  SizeOn, SizeOff, SizeHeader: TSize;
+  SizeOn, SizeOff: TSize;
+  HeaderRect: TRect;
 begin
   FTextWidth := 0;
   FHeaderWidth := 0;
@@ -744,8 +757,10 @@ begin
     begin
       SelectObject(DC, FHeaderFont.Handle);
       GetTextMetrics(DC, TM);
-      GetTextExtentPoint32(DC, PChar(FHeaderText), Length(FHeaderText), SizeHeader);
-      FHeaderWidth := SizeHeader.cx;
+      HeaderRect := TRect.Empty;
+      DrawText(DC, PChar(FHeaderText), Length(FHeaderText), HeaderRect,
+        DT_SINGLELINE or DT_CALCRECT);
+      FHeaderWidth := HeaderRect.Width;
       FHeaderHeight := TM.tmHeight;
     end;
 
@@ -1330,6 +1345,22 @@ begin
   Invalidate;
 end;
 
+// An ampersand in the header marks the accelerator, and Alt plus that letter
+// works the switch as if it had been clicked
+procedure TCustomFluentToggleSwitch.CMDialogChar(var Msg: TCMDialogChar);
+begin
+  if FShowHeader and Enabled and CanFocus and IsAccel(Msg.CharCode, FHeaderText) then
+  begin
+    SetFocus;
+    Msg.Result := 1;
+    // Last statement on purpose: a handler is free to free the switch
+    if FKeyboardToggle and not FReadOnly then
+      Toggle;
+  end
+  else
+    inherited;
+end;
+
 procedure TCustomFluentToggleSwitch.WMTimer(var Msg: TWMTimer);
 begin
   if Msg.TimerID = AnimationTimerId then
@@ -1341,8 +1372,9 @@ end;
 procedure TCustomFluentToggleSwitch.WMUpdateUIState(var Msg: TMessage);
 begin
   inherited;
-  // The ring may have just been shown or hidden for the whole window
-  if Focused then
+  // The ring, or the underline in the header, may have just been shown or
+  // hidden for the whole window
+  if Focused or FShowHeader then
     Invalidate;
 end;
 
@@ -1457,7 +1489,7 @@ var
   TextX, TextY: Integer;
   HeaderX, HeaderY: Integer;
   RowTop, RowHeight, TrackOffsetX: Integer;
-  Area: TRect;
+  Area, HeaderRect: TRect;
   LabelText: string;
 
   function Pick(Custom: TColor; Standard: ARGB): ARGB;
@@ -1613,7 +1645,9 @@ begin
       Canvas.Font.Assign(FHeaderFont);
       if not Enabled then
         Canvas.Font.Color := clGrayText;
-      Canvas.TextOut(HeaderX, HeaderY, FHeaderText);
+      LabelText := FHeaderText;
+      HeaderRect := Rect(HeaderX, HeaderY, HeaderX + FHeaderWidth, HeaderY + FHeaderHeight);
+      Canvas.TextRect(HeaderRect, LabelText, HeaderFormat);
     end;
   end;
 

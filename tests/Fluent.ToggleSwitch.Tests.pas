@@ -198,6 +198,18 @@ type
     procedure KillFocus_ShouldDropAHeldKey;
 
     [Test]
+    procedure Accelerator_ShouldFocusAndToggle;
+
+    [Test]
+    procedure Accelerator_ReadOnly_ShouldOnlyFocus;
+
+    [Test]
+    procedure Accelerator_KeyboardToggleOff_ShouldOnlyFocus;
+
+    [Test]
+    procedure Accelerator_WithoutHeader_ShouldNotAnswer;
+
+    [Test]
     procedure DragPastMiddle_ShouldTurnOnAndFireOnChange;
 
     [Test]
@@ -351,6 +363,12 @@ type
 
     [Test]
     procedure HeaderText_Long_ShouldKeepTheTrackInPlace;
+
+    [Test]
+    procedure Header_Ampersand_ShouldNotTakeRoom;
+
+    [Test]
+    procedure Header_Underline_ShouldFollowTheWindowUIState;
 
     [Test]
     procedure HeaderAlignment_ShouldCarryTheSwitchWithIt;
@@ -1311,6 +1329,53 @@ begin
   Assert.IsFalse(FOnChangeFired, 'and fires nothing');
 end;
 
+// A form broadcasts CM_DIALOGCHAR to its children while Alt is held; these
+// tests hand it to the switch directly, which is where the answer is decided
+procedure TToggleSwitchTest.Accelerator_ShouldFocusAndToggle;
+begin
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := '&Header';
+  ShowTheForm;
+  FOnChangeFired := False;
+  FToggle.OnChange := HandleOnChange;
+  Assert.IsTrue(FToggle.Perform(CM_DIALOGCHAR, Ord('H'), 0) <> 0,
+    'The switch answers for the letter its header marks');
+  Assert.IsTrue(FToggle.Focused, 'takes the focus');
+  Assert.IsTrue(FToggle.Checked, 'works as a click would');
+  Assert.IsTrue(FOnChangeFired, 'and reports the change');
+end;
+
+procedure TToggleSwitchTest.Accelerator_ReadOnly_ShouldOnlyFocus;
+begin
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := '&Header';
+  FToggle.ReadOnly := True;
+  ShowTheForm;
+  FToggle.Perform(CM_DIALOGCHAR, Ord('H'), 0);
+  Assert.IsTrue(FToggle.Focused, 'The letter still carries the focus over');
+  Assert.IsFalse(FToggle.Checked, 'but a read-only switch is not worked by it');
+end;
+
+procedure TToggleSwitchTest.Accelerator_KeyboardToggleOff_ShouldOnlyFocus;
+begin
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := '&Header';
+  FToggle.KeyboardToggle := False;
+  ShowTheForm;
+  FToggle.Perform(CM_DIALOGCHAR, Ord('H'), 0);
+  Assert.IsTrue(FToggle.Focused, 'The letter still carries the focus over');
+  Assert.IsFalse(FToggle.Checked, 'but a switch closed to the keyboard is not toggled');
+end;
+
+procedure TToggleSwitchTest.Accelerator_WithoutHeader_ShouldNotAnswer;
+begin
+  FToggle.HeaderText := '&Header';
+  ShowTheForm;
+  Assert.IsTrue(FToggle.Perform(CM_DIALOGCHAR, Ord('H'), 0) = 0,
+    'A header that is not shown marks nothing');
+  Assert.IsFalse(FToggle.Checked, 'and the switch stays as it was');
+end;
+
 procedure TToggleSwitchTest.DragPastMiddle_ShouldTurnOnAndFireOnChange;
 begin
   FOnChangeFired := False;
@@ -2069,6 +2134,42 @@ begin
   FToggle.HeaderText := 'A header far wider than the switch';
   Assert.IsTrue(FToggle.Left < 100, 'A header wider than the switch grows the control leftwards');
   Assert.AreEqual(TrackBefore, TrackLeftOnForm, 'and the track itself did not move');
+end;
+
+procedure TToggleSwitchTest.Header_Ampersand_ShouldNotTakeRoom;
+var
+  Plain: Integer;
+begin
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := 'A header far wider than the switch';
+  Plain := FToggle.Width;
+  FToggle.HeaderText := 'A he&ader far wider than the switch';
+  Assert.AreEqual(Plain, FToggle.Width,
+    'The ampersand marks the letter after it and takes no room of its own');
+end;
+
+// Windows keeps accelerator cues hidden until Alt is pressed, and says so to
+// each window; the switch asks the same way it asks about the focus ring
+procedure TToggleSwitchTest.Header_Underline_ShouldFollowTheWindowUIState;
+var
+  Hidden, Shown: TBitmap;
+begin
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := '&Header';
+  ShowTheForm;
+  Hidden := nil;
+  Shown := nil;
+  try
+    FForm.Perform(WM_CHANGEUISTATE, MakeWParam(UIS_SET, UISF_HIDEACCEL), 0);
+    Hidden := RenderToBitmap(FToggle);
+    FForm.Perform(WM_CHANGEUISTATE, MakeWParam(UIS_CLEAR, UISF_HIDEACCEL), 0);
+    Shown := RenderToBitmap(FToggle);
+    Assert.IsTrue(DescribeDifference(Hidden, Shown) <> '',
+      'Showing the cues brings the underline out');
+  finally
+    Shown.Free;
+    Hidden.Free;
+  end;
 end;
 
 // A header wider than the switch decides where the switch goes. Only the band
