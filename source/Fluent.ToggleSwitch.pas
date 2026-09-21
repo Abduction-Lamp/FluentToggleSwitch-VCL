@@ -87,7 +87,7 @@ type
     FHeaderAlignment: TAlignment;
     FHeaderSpacing: Integer;
     FHeaderFont: TFont;
-    FHeaderFontCustom: Boolean;
+    FParentHeaderFont: Boolean;
     FHeaderWidth: Integer;
     FHeaderHeight: Integer;
 
@@ -133,7 +133,10 @@ type
     procedure SetHeaderAlignment(Value: TAlignment);
     procedure SetHeaderSpacing(Value: Integer);
     procedure SetHeaderFont(Value: TFont);
+    function IsHeaderFontStored: Boolean;
     procedure HeaderFontChanged(Sender: TObject);
+    procedure SetParentHeaderFont(Value: Boolean);
+    procedure CopyFontToHeader;
     procedure Measure;
     procedure LayoutChanged(MoveWithTheHeader: Boolean = False);
     function TopBand: Integer;
@@ -191,7 +194,8 @@ type
     property HeaderPosition: TFluentHeaderPosition read FHeaderPosition write SetHeaderPosition default hpTop;
     property HeaderAlignment: TAlignment read FHeaderAlignment write SetHeaderAlignment default taCenter;
     property HeaderSpacing: Integer read FHeaderSpacing write SetHeaderSpacing default 6;
-    property HeaderFont: TFont read FHeaderFont write SetHeaderFont stored FHeaderFontCustom;
+    property HeaderFont: TFont read FHeaderFont write SetHeaderFont stored IsHeaderFontStored;
+    property ParentHeaderFont: Boolean read FParentHeaderFont write SetParentHeaderFont default True;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -247,6 +251,7 @@ type
     property HeaderAlignment;
     property HeaderSpacing;
     property HeaderFont;
+    property ParentHeaderFont;
     property OnContextPopup;
     property OnDblClick;
     property OnEnter;
@@ -457,6 +462,7 @@ begin
   FHeaderPosition := hpTop;
   FHeaderAlignment := taCenter;
   FHeaderSpacing := 6;
+  FParentHeaderFont := True;
   FHeaderFont := TFont.Create;
   FHeaderFont.Assign(Font);
   FHeaderFont.OnChange := HeaderFontChanged;
@@ -624,10 +630,40 @@ begin
   FHeaderFont.Assign(Value);
 end;
 
+function TCustomFluentToggleSwitch.IsHeaderFontStored: Boolean;
+begin
+  Result := not FParentHeaderFont;
+end;
+
 procedure TCustomFluentToggleSwitch.HeaderFontChanged(Sender: TObject);
 begin
-  FHeaderFontCustom := True;
+  FParentHeaderFont := False;
   LayoutChanged;
+end;
+
+procedure TCustomFluentToggleSwitch.SetParentHeaderFont(Value: Boolean);
+begin
+  if FParentHeaderFont = Value then
+    Exit;
+
+  FParentHeaderFont := Value;
+  if FParentHeaderFont then
+  begin
+    CopyFontToHeader;
+    LayoutChanged;
+  end;
+end;
+
+// The assignment must not look like a font the user picked, or it would clear
+// the very flag that asked for it
+procedure TCustomFluentToggleSwitch.CopyFontToHeader;
+begin
+  FHeaderFont.OnChange := nil;
+  try
+    FHeaderFont.Assign(Font);
+  finally
+    FHeaderFont.OnChange := HeaderFontChanged;
+  end;
 end;
 
 procedure TCustomFluentToggleSwitch.SetHeaderSpacing(Value: Integer);
@@ -859,15 +895,8 @@ end;
 procedure TCustomFluentToggleSwitch.CMFontChanged(var Msg: TMessage);
 begin
   inherited;
-  if not FHeaderFontCustom then
-  begin
-    FHeaderFont.OnChange := nil;
-    try
-      FHeaderFont.Assign(Font);
-    finally
-      FHeaderFont.OnChange := HeaderFontChanged;
-    end;
-  end;
+  if FParentHeaderFont then
+    CopyFontToHeader;
   LayoutChanged;
 end;
 
@@ -879,7 +908,7 @@ begin
     if not isDpiChange and not (csLoading in ComponentState) then
       FUserScale := FUserScale * M / D;
 
-    if FHeaderFontCustom then
+    if not FParentHeaderFont then
       FHeaderFont.Height := MulDiv(FHeaderFont.Height, M, D);
 
     FStateT := 1.0;

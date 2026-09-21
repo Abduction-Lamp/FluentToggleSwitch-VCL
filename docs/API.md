@@ -221,8 +221,20 @@ header and the row holding the switch. Negative values are raised to zero.
 
 Follows `Font` until you assign to it, and from then on stands on its own,
 including through a change of scale. It is written to a DFM only once it has
-been assigned to. There is no way back to following `Font`; see
-[Not implemented](#not-implemented).
+been assigned to.
+
+### `ParentHeaderFont: Boolean`
+
+Default `True`. Whether the header is written in the control's own `Font`.
+
+Assigning to `HeaderFont` turns it off, the way assigning to `Font` turns off
+`ParentFont`. Putting it back to `True` returns the header to `Font` at once —
+the font it had is not kept — and the header follows `Font` again from then on.
+While it is `True`, `HeaderFont` stays out of the DFM.
+
+The name follows `ParentFont`, `ParentColor` and the rest of the VCL, but the
+parent here is the switch itself, not the parent control: the header is part of
+the switch, and the font it falls back on is the switch's own.
 
 ---
 
@@ -449,4 +461,4 @@ Each of these has an issue of its own.
 | Right-to-left layout, though `BiDiMode` is published | [#12](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/12) |
 | Accessibility: the switch reports neither role nor state to a screen reader | [#13](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/13) |
 | A header outside the control's own window, as `TLabeledEdit` has | [#14](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/14) |
-| A way back to following `Font` for the header, and an accelerator in it | [#15](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/15) |
+| An accelerator in the header | [#15](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/15) |
