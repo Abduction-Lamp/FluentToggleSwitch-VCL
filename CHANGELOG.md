@@ -20,6 +20,13 @@ installation of 2.1.0.
   nothing the user does reaches it, there is no hover highlight and no pressed
   state, and `OnClick`, which reports a switch that changed, does not fire.
 
+- `ParentHeaderFont: Boolean`, default `True`. The header font used to follow
+  `Font` only until something assigned to `HeaderFont`, and after that there was
+  no way back: the flag that remembered it was internal and write-once, so a
+  header font touched once in the designer stayed detached for good, with
+  nothing in the Object Inspector to say so or undo it. The flag is now a
+  property, and putting it back to `True` returns the header to `Font` at once.
+
 - `TCustomFluentToggleSwitch`, the ancestor that carries the implementation.
   `TFluentToggleSwitch` descends from it and does nothing but publish
   properties, so a component descending from the custom class can publish its

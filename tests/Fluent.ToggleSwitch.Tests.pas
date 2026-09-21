@@ -300,6 +300,18 @@ type
     procedure HeaderFont_Changed_ShouldMeasureAgain;
 
     [Test]
+    procedure DefaultParentHeaderFont_ShouldBeTrue;
+
+    [Test]
+    procedure HeaderFont_Touched_ShouldClearParentHeaderFont;
+
+    [Test]
+    procedure ParentHeaderFont_BackToTrue_ShouldTakeTheFontNow;
+
+    [Test]
+    procedure ParentHeaderFont_BackToTrue_ShouldFollowFontAgain;
+
+    [Test]
     procedure TextPosition_Left_ShouldMoveTheTrack;
 
     [Test]
@@ -373,6 +385,9 @@ type
 
     [Test]
     procedure Stream_HeaderFont_Default_ShouldNotBeStored;
+
+    [Test]
+    procedure Stream_ParentHeaderFont_BackToTrue_ShouldStoreNeither;
 
     [Test]
     procedure Stream_Load_WithShowText_ShouldMeasureAfterLoad;
@@ -1791,6 +1806,37 @@ begin
     FToggle.Height, 'The band grows with the font the header is written in');
 end;
 
+procedure TToggleSwitchTest.DefaultParentHeaderFont_ShouldBeTrue;
+begin
+  Assert.IsTrue(FToggle.ParentHeaderFont, 'The header is written in the control font');
+end;
+
+procedure TToggleSwitchTest.HeaderFont_Touched_ShouldClearParentHeaderFont;
+begin
+  FToggle.HeaderFont.Style := [fsBold];
+  Assert.IsFalse(FToggle.ParentHeaderFont, 'A header font of its own stops following Font');
+end;
+
+// The way back that the flag exists for: a header font set by hand used to stay
+// for good, with nothing in the Object Inspector to undo it
+procedure TToggleSwitchTest.ParentHeaderFont_BackToTrue_ShouldTakeTheFontNow;
+begin
+  FToggle.Font.Name := 'Courier New';
+  FToggle.HeaderFont.Style := [fsBold];
+  FToggle.ParentHeaderFont := True;
+  Assert.AreEqual('Courier New', FToggle.HeaderFont.Name,
+    'The header takes the control font the moment the flag goes back');
+  Assert.IsTrue(FToggle.HeaderFont.Style = [], 'and keeps nothing of the font it had');
+end;
+
+procedure TToggleSwitchTest.ParentHeaderFont_BackToTrue_ShouldFollowFontAgain;
+begin
+  FToggle.HeaderFont.Style := [fsBold];
+  FToggle.ParentHeaderFont := True;
+  FToggle.Font.Size := 14;
+  Assert.AreEqual(14, FToggle.HeaderFont.Size, 'and follows Font from then on');
+end;
+
 // With the caption on the left the track moves to the other end, which only
 // the drawing knows about
 procedure TToggleSwitchTest.TextPosition_Left_ShouldMoveTheTrack;
@@ -2099,7 +2145,7 @@ end;
 // that list. Streaming covers the switch's own properties; this covers the rest
 procedure TToggleSwitchTest.PublishedApi_ShouldListEveryProperty;
 const
-  Expected: array[0..60] of string = (
+  Expected: array[0..61] of string = (
     'Align', 'AlignWithMargins', 'Anchors', 'AutoSize',
     'BiDiMode', 'Constraints', 'Cursor', 'DoubleBuffered',
     'Hint', 'Margins', 'ParentBiDiMode', 'ParentDoubleBuffered',
@@ -2111,11 +2157,11 @@ const
     'TrackColorOn', 'ThumbColorOff', 'ThumbColorOn', 'Font',
     'ShowText', 'TextOn', 'TextOff', 'TextPosition',
     'TextSpacing', 'ShowHeader', 'HeaderText', 'HeaderPosition',
-    'HeaderAlignment', 'HeaderSpacing', 'HeaderFont', 'OnContextPopup',
-    'OnDblClick', 'OnEnter', 'OnExit', 'OnMouseDown',
-    'OnMouseEnter', 'OnMouseLeave', 'OnMouseMove', 'OnMouseUp',
-    'OnMouseWheel', 'OnKeyDown', 'OnKeyPress', 'OnKeyUp',
-    'OnResize');
+    'HeaderAlignment', 'HeaderSpacing', 'HeaderFont', 'ParentHeaderFont',
+    'OnContextPopup', 'OnDblClick', 'OnEnter', 'OnExit',
+    'OnMouseDown', 'OnMouseEnter', 'OnMouseLeave', 'OnMouseMove',
+    'OnMouseUp', 'OnMouseWheel', 'OnKeyDown', 'OnKeyPress',
+    'OnKeyUp', 'OnResize');
 var
   I: Integer;
 begin
@@ -2266,6 +2312,7 @@ begin
     Assert.AreEqual<TFluentHeaderPosition>(hpBottom, Loaded.HeaderPosition, 'HeaderPosition');
     Assert.AreEqual<TAlignment>(taRightJustify, Loaded.HeaderAlignment, 'HeaderAlignment');
     Assert.AreEqual(3, Loaded.HeaderSpacing, 'HeaderSpacing');
+    Assert.IsFalse(Loaded.ParentHeaderFont, 'ParentHeaderFont');
     Assert.IsTrue(fsBold in Loaded.HeaderFont.Style, 'HeaderFont.Style');
   finally
     Loaded.Free;
@@ -2274,12 +2321,13 @@ end;
 
 procedure TToggleSwitchTest.Stream_Defaults_ShouldWriteNoOwnProperty;
 const
-  OwnProperties: array[0..22] of string = ('Checked', 'Animated', 'AutoSize',
-    'AnimationDuration', 'TabStop', 'ShowFocus', 'KeyboardToggle',
+  OwnProperties: array[0..24] of string = ('Checked', 'ReadOnly', 'Animated',
+    'AutoSize', 'AnimationDuration', 'TabStop', 'ShowFocus', 'KeyboardToggle',
     'TrackFrameColor', 'TrackColorOff',
     'TrackColorOn', 'ThumbColorOff', 'ThumbColorOn', 'ShowText', 'TextOn',
     'TextOff', 'TextPosition', 'TextSpacing', 'ShowHeader', 'HeaderText',
-    'HeaderPosition', 'HeaderAlignment', 'HeaderSpacing', 'HeaderFont');
+    'HeaderPosition', 'HeaderAlignment', 'HeaderSpacing', 'HeaderFont',
+    'ParentHeaderFont');
 var
   Dfm: string;
   Name: string;
@@ -2319,6 +2367,7 @@ begin
   try
     CopyThroughStream(FToggle, Loaded);
     Assert.IsTrue(fsBold in Loaded.HeaderFont.Style, 'A header font of its own comes back');
+    Assert.IsFalse(Loaded.ParentHeaderFont, 'and the loaded switch knows it is not following Font');
     Assert.IsTrue(Pos('  HeaderFont.', AsText(Loaded)) > 0,
       'and is written again, so the load marked it as custom');
   finally
@@ -2335,6 +2384,17 @@ begin
   Assert.IsTrue(Pos('  Font.', Dfm) > 0, 'The control font itself is written');
   Assert.AreEqual(0, Pos('  HeaderFont.', Dfm),
     'A header font that only follows Font stays out of the DFM');
+end;
+
+procedure TToggleSwitchTest.Stream_ParentHeaderFont_BackToTrue_ShouldStoreNeither;
+var
+  Dfm: string;
+begin
+  FToggle.HeaderFont.Style := [fsBold];
+  FToggle.ParentHeaderFont := True;
+  Dfm := AsText(FToggle);
+  Assert.AreEqual(0, Pos('  HeaderFont.', Dfm), 'A header font back on Font is not written');
+  Assert.AreEqual(0, Pos('  ParentHeaderFont', Dfm), 'and the flag is at its default again');
 end;
 
 procedure TToggleSwitchTest.Stream_Load_WithShowText_ShouldMeasureAfterLoad;
