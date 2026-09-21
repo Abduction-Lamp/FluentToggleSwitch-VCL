@@ -20,12 +20,14 @@ installation of 2.1.0.
   nothing the user does reaches it, there is no hover highlight and no pressed
   state, and `OnClick`, which reports a switch that changed, does not fire.
 
-- An accelerator in the header. An ampersand in `HeaderText` used to be drawn
-  as one; it now marks the letter after it, `&&` draws a literal ampersand, and
-  Alt plus that letter gives the switch the focus and toggles it. It toggles
-  only when the keyboard may change the value, so `KeyboardToggle` off or
-  `ReadOnly` on leaves it at the focus. The underline keeps to the convention
-  Windows sets for the window: hidden until Alt is pressed, like the focus ring.
+- An accelerator in the header. `&Sound` underlines the S, and Alt+S gives the
+  switch the focus and toggles it, the way an accelerator works a check box.
+  Both halves follow the rules a click follows: the value changes only where the
+  keyboard may change it, so `KeyboardToggle` off or `ReadOnly` on leaves the
+  switch as it was, and the focus is taken only where a click would take it. The
+  underline keeps to the convention Windows sets for the window: hidden until
+  Alt is pressed, like the focus ring. The letter is picked by `IsAccel`, so as
+  in every VCL caption only the first ampersand in the string counts.
 
 - `ParentHeaderFont: Boolean`, default `True`. The header font used to follow
   `Font` only until something assigned to `HeaderFont`, and after that there was
@@ -42,6 +44,13 @@ installation of 2.1.0.
   streams are what they were.
 
 ### Changed
+
+- **Breaking.** An ampersand in `HeaderText` is no longer drawn as one. It marks
+  the letter after it, and `&&` draws a single ampersand, as in every VCL
+  caption. A header that carried a literal ampersand — `Sound & vibration` —
+  now reads `Sound  vibration` with the space underlined, and measures
+  narrower, so a switch left at `AutoSize` changes width with it. Doubling the
+  ampersand keeps the old picture: `Sound && vibration`.
 
 - **Breaking.** A compiled package carries the compiler version in its name:
   `FluentToggleSwitchR370.bpl` under Florence, `FluentToggleSwitchR290.bpl`
