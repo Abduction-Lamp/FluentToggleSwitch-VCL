@@ -202,6 +202,11 @@ Default `False`.
 A switch that has never been given a header carries its own `Name`, so turning
 the header on shows something at once.
 
+An ampersand marks the accelerator: `&Sound` underlines the S and makes Alt+S
+work the switch. Two of them, `Sound && vibration`, draw one. The underline
+stays hidden until Alt is pressed, the convention Windows sets for the whole
+window. See [Keyboard and focus](#keyboard-and-focus).
+
 ### `HeaderPosition: TFluentHeaderPosition`
 
 Default `hpTop`. Above the switch or below it.
@@ -340,6 +345,12 @@ is left for whatever else wants it. Enter does nothing, as in WinUI.
 
 Clicking the switch gives it the focus, unless `TabStop` is off.
 
+Alt plus the letter marked in `HeaderText` gives the switch the focus and
+toggles it, the way an accelerator works a check box. It toggles only when the
+keyboard may change the value: with `KeyboardToggle` off or `ReadOnly` on it
+carries the focus over and stops there. A header that is not shown marks
+nothing, whatever `HeaderText` holds.
+
 The focus ring follows the convention Windows sets: it stays hidden until
 someone navigates by keyboard, and the window says which of the two it is. A
 switch reached by the mouse therefore holds the focus without showing a ring,
@@ -461,4 +472,3 @@ Each of these has an issue of its own.
 | Right-to-left layout, though `BiDiMode` is published | [#12](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/12) |
 | Accessibility: the switch reports neither role nor state to a screen reader | [#13](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/13) |
 | A header outside the control's own window, as `TLabeledEdit` has | [#14](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/14) |
-| An accelerator in the header | [#15](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/15) |

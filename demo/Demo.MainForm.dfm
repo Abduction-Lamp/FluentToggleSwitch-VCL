@@ -605,7 +605,7 @@ object Form1: TForm1
       OnChange = FluentToggleSwitch11Change
       ShowText = True
       ShowHeader = True
-      HeaderText = 'Header'
+      HeaderText = '&Header'
       ExplicitLeft = 154
     end
     object Label12: TLabel
