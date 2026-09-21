@@ -207,12 +207,6 @@ work the switch. Two of them, `Sound && vibration`, draw one. The underline
 stays hidden until Alt is pressed, the convention Windows sets for the whole
 window. See [Keyboard and focus](#keyboard-and-focus).
 
-Only the first ampersand in the string decides the letter. The VCL picks it
-with `IsAccel`, which looks no further, so a literal `&&` placed ahead of the
-marked letter leaves that letter underlined and out of Alt's reach. Every VCL
-caption behaves this way; put the accelerator before the literal ampersand, or
-leave one of the two out.
-
 ### `HeaderPosition: TFluentHeaderPosition`
 
 Default `hpTop`. Above the switch or below it.
