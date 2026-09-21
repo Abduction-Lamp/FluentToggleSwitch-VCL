@@ -26,8 +26,7 @@ installation of 2.1.0.
   keyboard may change it, so `KeyboardToggle` off or `ReadOnly` on leaves the
   switch as it was, and the focus is taken only where a click would take it. The
   underline keeps to the convention Windows sets for the window: hidden until
-  Alt is pressed, like the focus ring. The letter is picked by `IsAccel`, so as
-  in every VCL caption only the first ampersand in the string counts.
+  Alt is pressed, like the focus ring.
 
 - `ParentHeaderFont: Boolean`, default `True`. The header font used to follow
   `Font` only until something assigned to `HeaderFont`, and after that there was
