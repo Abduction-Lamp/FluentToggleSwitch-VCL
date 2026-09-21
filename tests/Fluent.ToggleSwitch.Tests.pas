@@ -331,6 +331,11 @@ type
     [Test]
     procedure HeaderPosition_ShouldNotChangeTheSize;
 
+    // --- Published API ---
+
+    [Test]
+    procedure PublishedApi_ShouldListEveryProperty;
+
     // --- Streaming ---
 
     [Test]
@@ -364,7 +369,8 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils,
+  System.TypInfo;
 
 type
   // Reaches the two things a test cannot get at from outside: how often the
@@ -1984,6 +1990,37 @@ begin
   FToggle.HeaderPosition := hpBottom;
   Assert.AreEqual(W, FToggle.Width);
   Assert.AreEqual(H, FToggle.Height);
+end;
+
+// --- Published API ---
+
+// The switch declares its properties on TCustomFluentToggleSwitch and publishes
+// them on the descendant, so a property is lost by simply not being named in
+// that list. Streaming covers the switch's own properties; this covers the rest
+procedure TToggleSwitchTest.PublishedApi_ShouldListEveryProperty;
+const
+  Expected: array[0..59] of string = (
+    'Align', 'AlignWithMargins', 'Anchors', 'AutoSize',
+    'BiDiMode', 'Constraints', 'Cursor', 'DoubleBuffered',
+    'Hint', 'Margins', 'ParentBiDiMode', 'ParentDoubleBuffered',
+    'ParentFont', 'ParentShowHint', 'PopupMenu', 'ShowHint',
+    'Visible', 'Checked', 'Animated', 'AnimationDuration',
+    'Enabled', 'TabStop', 'TabOrder', 'ShowFocus',
+    'KeyboardToggle', 'Color', 'ParentColor', 'OnChange',
+    'OnClick', 'TrackFrameColor', 'TrackColorOff', 'TrackColorOn',
+    'ThumbColorOff', 'ThumbColorOn', 'Font', 'ShowText',
+    'TextOn', 'TextOff', 'TextPosition', 'TextSpacing',
+    'ShowHeader', 'HeaderText', 'HeaderPosition', 'HeaderAlignment',
+    'HeaderSpacing', 'HeaderFont', 'OnContextPopup', 'OnDblClick',
+    'OnEnter', 'OnExit', 'OnMouseDown', 'OnMouseEnter',
+    'OnMouseLeave', 'OnMouseMove', 'OnMouseUp', 'OnMouseWheel',
+    'OnKeyDown', 'OnKeyPress', 'OnKeyUp', 'OnResize');
+var
+  I: Integer;
+begin
+  for I := Low(Expected) to High(Expected) do
+    Assert.IsTrue(GetPropInfo(TFluentToggleSwitch, Expected[I]) <> nil,
+      Expected[I] + ' is not published');
 end;
 
 // --- Streaming ---
