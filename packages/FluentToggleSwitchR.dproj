@@ -58,8 +58,7 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
         <VerInfo_MinorVer>1</VerInfo_MinorVer>
-        <VerInfo_Release>0</VerInfo_Release>
-        <VerInfo_Build>0</VerInfo_Build>
+        <DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
         <VerInfo_Keys>CompanyName=Abduction-Lamp;FileDescription=Fluent Toggle Switch runtime package;FileVersion=2.1.0.0;InternalName=;LegalCopyright=Copyright (c) 2026 Abduction-Lamp;LegalTrademarks=;OriginalFilename=;ProgramID=;ProductName=Fluent Toggle Switch;ProductVersion=2.1.0.0;Comments=MIT licence. https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
