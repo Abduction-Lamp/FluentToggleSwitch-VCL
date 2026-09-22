@@ -110,6 +110,7 @@ type
     function HeaderGap: Integer;
     function HeaderBand: Integer;
     function HeaderFormat: TTextFormat;
+    function TextFormat: TTextFormat;
     function StateVisual(S: TFluentInteractionState): TFluentVisualState;
     function CurrentVisual: TFluentVisualState;
     procedure UpdateVisualState;
@@ -143,11 +144,13 @@ type
     procedure LayoutChanged(MoveWithTheHeader: Boolean = False);
     function TopBand: Integer;
     function BlockWidth: Integer;
+    function HeaderAlignmentOnScreen: TAlignment;
     function SwitchIndent: Integer;
     function SwitchArea: TRect;
     procedure RereadAccent;
 
     procedure CMFontChanged(var Msg: TMessage);    message CM_FONTCHANGED;
+    procedure CMBiDiModeChanged(var Msg: TMessage); message CM_BIDIMODECHANGED;
     procedure CMMouseLeave(var Msg: TMessage);     message CM_MOUSELEAVE;
     procedure WMCancelMode(var Msg: TMessage);     message WM_CANCELMODE;
     procedure CMEnabledChanged(var Msg: TMessage); message CM_ENABLEDCHANGED;
@@ -725,6 +728,20 @@ begin
   Result := [tfSingleLine, tfNoClip];
   if UICueHidden(UISF_HIDEACCEL) then
     Include(Result, tfHidePrefix);
+  if UseRightToLeftReading then
+    Include(Result, tfRtlReading);
+end;
+
+// The caption keeps its ampersands: only the header carries an accelerator.
+// Its column is as wide as the wider of the two captions, and the shorter one
+// hugs the edge the layout starts from
+function TCustomFluentToggleSwitch.TextFormat: TTextFormat;
+begin
+  Result := [tfSingleLine, tfNoClip, tfNoPrefix];
+  if UseRightToLeftAlignment then
+    Include(Result, tfRight);
+  if UseRightToLeftReading then
+    Include(Result, tfRtlReading);
 end;
 
 function TCustomFluentToggleSwitch.HeaderBand: Integer;
@@ -825,19 +842,36 @@ begin
     Inc(Result, TextGap + FTextWidth);
 end;
 
+// HeaderAlignment is read the way the text runs, as TLabel reads Alignment:
+// a header aligned left sits against the right edge on a right-to-left form
+function TCustomFluentToggleSwitch.HeaderAlignmentOnScreen: TAlignment;
+begin
+  Result := FHeaderAlignment;
+  if UseRightToLeftAlignment then
+    ChangeBiDiModeAlignment(Result);
+end;
+
+// The switch and its caption follow the header across a wider control. Without
+// a header they keep to the edge the text starts from
 function TCustomFluentToggleSwitch.SwitchIndent: Integer;
 var
   Extra: Integer;
+  Alignment: TAlignment;
 begin
   Result := 0;
-  if not FShowHeader then
-    Exit;
-
   Extra := Width - BlockWidth;
   if Extra <= 0 then
     Exit;
 
-  case FHeaderAlignment of
+  if FShowHeader then
+    Alignment := HeaderAlignmentOnScreen
+  else
+    if UseRightToLeftAlignment then
+      Alignment := taRightJustify
+    else
+      Alignment := taLeftJustify;
+
+  case Alignment of
     taLeftJustify : Result := 0;
     taRightJustify: Result := Extra;
   else
@@ -918,6 +952,16 @@ begin
   inherited;
   if FParentHeaderFont then
     CopyFontToHeader;
+  LayoutChanged;
+end;
+
+// A gesture under way was measured the other way round. The switch crosses to
+// the other end of a wide control; the control itself stays put
+procedure TCustomFluentToggleSwitch.CMBiDiModeChanged(var Msg: TMessage);
+begin
+  inherited;
+  CancelPress;
+  UpdateVisualState;
   LayoutChanged;
 end;
 
@@ -1287,7 +1331,10 @@ procedure TCustomFluentToggleSwitch.DragThumb(X: Integer);
 var
   Delta: Single;
 begin
+  // Measured towards On, which lies to the left on a right-to-left form
   Delta := X - FDragStartX;
+  if UseRightToLeftAlignment then
+    Delta := -Delta;
 
   if Abs(Delta) >= DragThreshold * CurrentScale then
     FDragged := True;
@@ -1526,8 +1573,9 @@ var
   TextX, TextY: Integer;
   HeaderX, HeaderY: Integer;
   RowTop, RowHeight, TrackOffsetX: Integer;
-  Area, HeaderRect: TRect;
+  Area, HeaderRect, LabelRect: TRect;
   LabelText: string;
+  Mirrored: Boolean;
 
   function Pick(Custom: TColor; Standard: ARGB): ARGB;
   begin
@@ -1566,6 +1614,7 @@ begin
   TextY := 0;
   HeaderX := 0;
   HeaderY := 0;
+  Mirrored := UseRightToLeftAlignment;
 
   Canvas.Brush.Style := bsSolid;
   Canvas.Brush.Color := Color;
@@ -1578,7 +1627,7 @@ begin
     else
       HeaderY := Height - FHeaderHeight;
 
-    case FHeaderAlignment of
+    case HeaderAlignmentOnScreen of
       taCenter      : HeaderX := (Width - FHeaderWidth) div 2;
       taRightJustify: HeaderX := Width - FHeaderWidth;
     end;
@@ -1586,7 +1635,10 @@ begin
 
   if FShowText then
   begin
-    if FTextPosition = tpLeft then
+    // TextPosition names the side the way the text runs, as TCheckBox reads
+    // Alignment: a caption to the right of the switch is to its left when the
+    // layout runs right to left
+    if (FTextPosition = tpLeft) <> Mirrored then
     begin
       TextX := TrackOffsetX;
       TrackOffsetX := TrackOffsetX + FTextWidth + TextGap;
@@ -1612,7 +1664,13 @@ begin
   ThumbW  := VS.ThumbW;
   ThumbH  := VS.ThumbH;
   ThumbCY := TrackY + TrackH / 2;
-  ThumbCX := TrackX + VS.ThumbOffX + (VS.ThumbOnX - VS.ThumbOffX) * FAnimProgress + FDragDelta;
+  // Measured from the end the thumb rests at when off, which is the right end
+  // when the layout runs right to left
+  ThumbCX := VS.ThumbOffX + (VS.ThumbOnX - VS.ThumbOffX) * FAnimProgress + FDragDelta;
+  if Mirrored then
+    ThumbCX := TrackX + TrackW - ThumbCX
+  else
+    ThumbCX := TrackX + ThumbCX;
 
   G := nil;
   Path := nil;
@@ -1674,7 +1732,8 @@ begin
         LabelText := FTextOn
       else
         LabelText := FTextOff;
-      Canvas.TextOut(TextX, TextY, LabelText);
+      LabelRect := Rect(TextX, TextY, TextX + FTextWidth, TextY + FTextHeight);
+      Canvas.TextRect(LabelRect, LabelText, TextFormat);
     end;
 
     if FShowHeader then

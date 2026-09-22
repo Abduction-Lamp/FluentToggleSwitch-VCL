@@ -42,6 +42,18 @@ installation of 2.1.0.
   unaffected: the class name, the published properties and the `.dfm` it
   streams are what they were.
 
+- Right-to-left layout. `BiDiMode` was published from the start and never
+  read, so a switch on a right-to-left form laid itself out left to right. At
+  `bdRightToLeft` the switch is now mirrored, the way WinUI, Android and iOS
+  mirror theirs: the thumb rests at the right end while off and travels left
+  to turn on, the caption goes to the other side of the track, the header and
+  the switch under it align against the other edge, and both lines are read
+  right to left. `TextPosition` and `HeaderAlignment` are read the way the
+  text runs, as `TCheckBox` and `TLabel` read `Alignment`. The two reading-only
+  modes change the reading order alone. As everywhere in the VCL, this takes a
+  system set up for a right-to-left language; elsewhere `BiDiMode` still
+  changes nothing.
+
 ### Changed
 
 - **Breaking.** An ampersand in `HeaderText` is no longer drawn as one. It marks
