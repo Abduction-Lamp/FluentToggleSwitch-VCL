@@ -38,7 +38,7 @@ shows its age, and the third-party ones bring dependencies with them.
 
 ## Installation
 
-Delphi 13 Florence, Win32 and Win64.
+Delphi 13 Florence, Win32 and Win64, from the 32-bit IDE or the 64-bit one.
 
 1. Unpack a [release](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/releases)
    where it can stay, keeping the version in the path:
@@ -53,11 +53,15 @@ Delphi 13 Florence, Win32 and Win64.
 designer needs the packages: a project that creates the switch from code
 compiles with step 2 alone.
 
+Open the demo only after that. If the IDE reports `Class TFluentToggleSwitch
+not found` when a form opens, the design-time package is not installed in this
+IDE: answer Cancel — Ignore strips the switches from the form.
+
 Upgrading from an older release: see [CHANGELOG](CHANGELOG.md), which says what
 to remove first.
 
-_note: 12.1 Athens can build the packages from `packages\*.dpk`, and the 64-bit
-IDE of Florence can take the Win64 design-time package; neither is tested here._
+_note: 12.1 Athens can build the packages from `packages\*.dpk`; that route is
+not tested here._
 
 ## Basic usage
 
