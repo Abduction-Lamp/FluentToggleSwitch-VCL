@@ -1,6 +1,6 @@
 # TFluentToggleSwitch — API reference
 
-Version 2.0.0. Unit `Fluent.ToggleSwitch`, palette page **Fluent**.
+Version 3.0.0. Unit `Fluent.ToggleSwitch`, palette page **Fluent**.
 
 ```
 TComponent → TControl → TWinControl → TCustomControl →

@@ -52,14 +52,14 @@
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <DCC_CBuilderOutput>All</DCC_CBuilderOutput>
         <SanitizedProjectName>FluentToggleSwitchR</SanitizedProjectName>
-        <DCC_Description>Fluent Toggle Switch 2.1.0 runtime</DCC_Description>
+        <DCC_Description>Fluent Toggle Switch 3.0.0 runtime</DCC_Description>
         <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
         <DllSuffix>$(Auto)</DllSuffix>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_MajorVer>2</VerInfo_MajorVer>
-        <VerInfo_MinorVer>1</VerInfo_MinorVer>
+        <VerInfo_MajorVer>3</VerInfo_MajorVer>
+        <VerInfo_MinorVer>0</VerInfo_MinorVer>
         <DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
-        <VerInfo_Keys>CompanyName=Abduction-Lamp;FileDescription=Fluent Toggle Switch runtime package;FileVersion=2.1.0.0;InternalName=;LegalCopyright=Copyright (c) 2026 Abduction-Lamp;LegalTrademarks=;OriginalFilename=;ProgramID=;ProductName=Fluent Toggle Switch;ProductVersion=2.1.0.0;Comments=MIT licence. https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Abduction-Lamp;FileDescription=Fluent Toggle Switch runtime package;FileVersion=3.0.0.0;InternalName=;LegalCopyright=Copyright (c) 2026 Abduction-Lamp;LegalTrademarks=;OriginalFilename=;ProgramID=;ProductName=Fluent Toggle Switch;ProductVersion=3.0.0.0;Comments=MIT licence. https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">

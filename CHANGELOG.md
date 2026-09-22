@@ -5,9 +5,9 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-09-23
 
-The next release takes the major number: the rename below breaks every
+The release takes the major number: the rename below breaks every
 installation of 2.1.0.
 
 ### Added
@@ -83,8 +83,11 @@ installation of 2.1.0.
   Win64 application built with runtime packages had nothing to link against.
   The component source needed no change for it — no pointer casts, no
   assembler, no platform conditionals — and the tests pass on both platforms.
-  Whether the Win64 design-time package installs into the 64-bit IDE of
-  Florence is untested.
+  The Win64 design-time package installs into the 64-bit IDE of Florence.
+
+- Both packages are set to explicit rebuild, the way component libraries
+  ship: a project that requires them no longer rebuilds them under its own
+  settings.
 
 - The version resource of both packages is filled in: company, product and
   copyright as they read in `LICENSE`, a description naming the package, and a
@@ -372,7 +375,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
-[Unreleased]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.1.0...HEAD
+[3.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
 [1.6.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.5.0...v1.6.0
