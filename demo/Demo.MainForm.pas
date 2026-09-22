@@ -48,6 +48,10 @@ type
     FluentToggleSwitch11: TFluentToggleSwitch;
     Label12: TLabel;
     FluentToggleSwitch12: TFluentToggleSwitch;
+    Label13: TLabel;
+    FluentToggleSwitch13: TFluentToggleSwitch;
+    Label14: TLabel;
+    FluentToggleSwitch14: TFluentToggleSwitch;
     procedure FluentToggleSwitch2Change(Sender: TObject);
     procedure FluentToggleSwitch3Change(Sender: TObject);
     procedure FluentToggleSwitch8Change(Sender: TObject);

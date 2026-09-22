@@ -31,6 +31,7 @@ sensible answer ready when either is unavailable.
 - [Events](#events)
 - [What answers the pointer](#what-answers-the-pointer)
 - [Keyboard and focus](#keyboard-and-focus)
+- [Right to left](#right-to-left)
 - [Size and scaling](#size-and-scaling)
 - [Animation](#animation)
 - [Streaming](#streaming)
@@ -173,7 +174,9 @@ which is the same limitation `Vcl.WinXCtrls.TToggleSwitch` has.
 
 ### `TextPosition: TFluentTextPosition`
 
-Default `tpRight`. Which side of the track the caption goes.
+Default `tpRight`. Which side of the track the caption goes, the way the text
+runs: on a right-to-left form `tpRight` puts it to the left of the track. See
+[Right to left](#right-to-left).
 
 ### `TextSpacing: Integer`
 
@@ -215,7 +218,8 @@ Default `hpTop`. Above the switch or below it.
 
 Default `taCenter`. How the header is aligned when it is wider than the switch
 and its caption. The switch itself moves with it: aligned left, the switch sits
-at the left edge; centred, it sits in the middle.
+at the left edge; centred, it sits in the middle. On a right-to-left form left
+and right swap, as they do for a `TLabel`.
 
 ### `HeaderSpacing: Integer`
 
@@ -247,16 +251,15 @@ the switch, and the font it falls back on is the switch's own.
 
 Republished from the VCL and behaving as they do everywhere else:
 
-`Align`, `AlignWithMargins`, `Anchors`, `AutoSize`, `Constraints`, `Cursor`,
-`DoubleBuffered`, `Hint`, `Margins`, `ParentDoubleBuffered`, `ParentFont`,
-`ParentShowHint`, `PopupMenu`, `ShowHint`, `TabOrder`, `TabStop`, `Visible`.
+`Align`, `AlignWithMargins`, `Anchors`, `AutoSize`, `BiDiMode`, `Constraints`,
+`Cursor`, `DoubleBuffered`, `Hint`, `Margins`, `ParentBiDiMode`,
+`ParentDoubleBuffered`, `ParentFont`, `ParentShowHint`, `PopupMenu`,
+`ShowHint`, `TabOrder`, `TabStop`, `Visible`.
 
 `AutoSize` and `TabStop` default to `True`, which differs from the VCL defaults
 they replace.
 
-`BiDiMode` and `ParentBiDiMode` are published but the layout does not read
-them: the switch is not mirrored on a right-to-left form. See
-[Not implemented](#not-implemented).
+`BiDiMode` mirrors the switch; see [Right to left](#right-to-left).
 
 ---
 
@@ -360,6 +363,35 @@ and the ring appears the moment the user reaches for Tab. `ShowFocus` decides
 whether the switch takes part in that at all.
 
 The ring is drawn around the switch and its caption, leaving the header out.
+
+---
+
+## Right to left
+
+`BiDiMode` at `bdRightToLeft` mirrors the switch. The rule is the one the rest
+of the VCL follows: the mirroring takes a system set up for a right-to-left
+language (`SysLocale.MiddleEast`), and elsewhere `bdRightToLeft` changes
+nothing, for the switch as for every other control. The other two modes,
+`bdRightToLeftNoAlign` and `bdRightToLeftReadingOnly`, change the reading
+order of the caption and the header and leave the layout alone.
+
+Mirrored, the switch does what WinUI, Android and iOS do with theirs:
+
+- the thumb rests at the right end while off and travels left to turn on, and
+  a drag follows it the same way;
+- `TextPosition` is read the way the text runs, as `TCheckBox` reads
+  `Alignment`: the default `tpRight` puts the caption to the left of the track;
+- `HeaderAlignment` is read the same way, as `TLabel` reads `Alignment`:
+  `taLeftJustify` puts the header, and the switch under it, against the right
+  edge. A control wider than its switch and caption keeps them against the
+  right edge without a header too;
+- the caption and the header are drawn in right-to-left reading order, so a
+  full stop ends a Latin line at its left end.
+
+Changing `BiDiMode` neither moves the control nor changes its size; the switch
+crosses to the other end inside it, and a gesture under way is dropped. The
+space bar, the focus ring and the baseline given to the designer are the same
+either way.
 
 ---
 
@@ -471,6 +503,5 @@ Each of these has an issue of its own.
 |---|---|
 | Dark surfaces, VCL styles, and letting the parent paint the background | [#10](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/10) |
 | `TAction` through an action link | [#11](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/11) |
-| Right-to-left layout, though `BiDiMode` is published | [#12](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/12) |
 | Accessibility: the switch reports neither role nor state to a screen reader | [#13](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/13) |
 | A header outside the control's own window, as `TLabeledEdit` has | [#14](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/issues/14) |

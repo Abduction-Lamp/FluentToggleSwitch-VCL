@@ -23,6 +23,7 @@ type
     FOnClickCount: Integer;
     FCheckedWhenClicked: Boolean;
     FDblClickCount: Integer;
+    FMiddleEastWas: Boolean;
     procedure HandleOnClick(Sender: TObject);
     procedure HandleOnChange(Sender: TObject);
     procedure Render(Toggle: TFluentToggleSwitch);
@@ -49,11 +50,13 @@ type
     function RenderToBitmap(Toggle: TFluentToggleSwitch): TBitmap;
     function DescribeDifference(A, B: TBitmap; FromY: Integer = 0): string;
     procedure DifferingColumns(A, B: TBitmap; out First, Last: Integer; FromY: Integer = 0);
+    procedure InkColumns(Bmp: TBitmap; FromX, ToX: Integer; out First, Last: Integer);
     function LineHeight(Font: TFont): Integer;
     function LineWidth(Font: TFont; const S: string): Integer;
     function CaptionWidth: Integer;
     function TextGap: Integer;
     function TrackLeftOnForm: Integer;
+    procedure RightToLeft(Mode: TBiDiMode = bdRightToLeft);
     procedure CopyThroughStream(Source, Target: TFluentToggleSwitch);
     function StreamFormWithSwitch(out Loaded: TFluentToggleSwitch;
       out SourceWidth: Integer): TForm;
@@ -105,6 +108,8 @@ type
     [Test]
     procedure SetTextOn_ShouldAffectWidth;
 
+    [Test]
+    procedure Caption_Ampersand_ShouldBeDrawnAsOne;
 
     // --- Toggle and events ---
 
@@ -388,6 +393,41 @@ type
     [Test]
     procedure HeaderPosition_ShouldNotChangeTheSize;
 
+    // --- Right to left ---
+
+    [Test]
+    procedure RightToLeft_ShouldRestTheThumbAtTheRightEnd;
+
+    [Test]
+    procedure RightToLeft_FromTheForm_ShouldReachTheSwitch;
+
+    [Test]
+    procedure RightToLeft_DragLeft_ShouldTurnOn;
+
+    [Test]
+    procedure RightToLeft_DragRight_ShouldNotToggle;
+
+    [Test]
+    procedure RightToLeft_DragRight_FromOn_ShouldTurnOff;
+
+    [Test]
+    procedure RightToLeft_TextPosition_Right_ShouldPutTheCaptionOnTheLeft;
+
+    [Test]
+    procedure RightToLeft_ShorterCaption_ShouldKeepToTheSwitch;
+
+    [Test]
+    procedure RightToLeft_HeaderAlignment_Left_ShouldPutTheSwitchAtTheRightEdge;
+
+    [Test]
+    procedure RightToLeft_WithoutHeader_ShouldPutTheSwitchAtTheRightEdge;
+
+    [Test]
+    procedure RightToLeft_ReadingOnly_ShouldReorderTheText;
+
+    [Test]
+    procedure RightToLeft_Changed_ShouldKeepTheControlAndTheTrackInPlace;
+
     // --- Published API ---
 
     [Test]
@@ -482,6 +522,7 @@ begin
   FOnClickCount := 0;
   FCheckedWhenClicked := False;
   FDblClickCount := 0;
+  FMiddleEastWas := SysLocale.MiddleEast;
 
   FForm := TForm.CreateNew(nil);
   FToggle := TFluentToggleSwitch.Create(FForm);
@@ -494,6 +535,7 @@ end;
 procedure TToggleSwitchTest.TearDown;
 begin
   FForm.Free;
+  SysLocale.MiddleEast := FMiddleEastWas;
 end;
 
 // The first window, paint and mouse input of the process fill VCL caches
@@ -542,6 +584,11 @@ begin
     FToggle.AnimationDuration := 1;
     FToggle.Checked := True;
     PumpFor(300);
+    // The first line read right to left brings up the shaping engine
+    FToggle.HeaderText := 'Header';
+    FToggle.ShowHeader := True;
+    RightToLeft;
+    Render(FToggle);
   finally
     TearDown;
   end;
@@ -718,6 +765,14 @@ begin
   Result := FToggle.Left + (FToggle.Width - TrackAreaWidth) div 2;
 end;
 
+// Laid out for a language read right to left. The VCL mirrors only on a
+// system that reads one, so the test says so for itself; TearDown takes it back
+procedure TToggleSwitchTest.RightToLeft(Mode: TBiDiMode = bdRightToLeft);
+begin
+  SysLocale.MiddleEast := True;
+  FToggle.BiDiMode := Mode;
+end;
+
 function TToggleSwitchTest.RenderToBitmap(Toggle: TFluentToggleSwitch): TBitmap;
 begin
   Result := TBitmap.Create;
@@ -763,6 +818,27 @@ begin
           Last := X;
       end;
   end;
+end;
+
+// The columns between FromX and ToX that hold anything but the background,
+// which is what the top row of the control is made of
+procedure TToggleSwitchTest.InkColumns(Bmp: TBitmap; FromX, ToX: Integer; out First, Last: Integer);
+var
+  X, Y: Integer;
+  Background: TColor;
+begin
+  First := -1;
+  Last := -1;
+  Background := Bmp.Canvas.Pixels[FromX, 0];
+  for X := FromX to ToX - 1 do
+    for Y := 0 to Bmp.Height - 1 do
+      if Bmp.Canvas.Pixels[X, Y] <> Background then
+      begin
+        if First < 0 then
+          First := X;
+        Last := X;
+        Break;
+      end;
 end;
 
 // A line of the given font, measured the way the switch measures it. The font
@@ -911,6 +987,32 @@ begin
   FToggle.ShowText := True;
   FToggle.ShowText := False;
   Assert.AreEqual(42, FToggle.Width);
+end;
+
+// The caption goes through DrawText for the sake of the reading order, and
+// DrawText would take an ampersand for an accelerator, the way the header does
+procedure TToggleSwitchTest.Caption_Ampersand_ShouldBeDrawnAsOne;
+var
+  Plain, WithIt: TBitmap;
+  First, Last: Integer;
+begin
+  Plain := nil;
+  WithIt := nil;
+  try
+    FToggle.ShowText := True;
+    // TextOn keeps the column as wide as the longer caption both times
+    FToggle.TextOn := 'A&B';
+    FToggle.TextOff := 'AB';
+    Plain := RenderToBitmap(FToggle);
+    FToggle.TextOff := 'A&B';
+    WithIt := RenderToBitmap(FToggle);
+    DifferingColumns(Plain, WithIt, First, Last);
+    Assert.IsTrue(Last >= TrackAreaWidth + TextGap + LineWidth(FToggle.Font, 'AB'),
+      'The ampersand is a glyph of its own and pushes the B past where AB ends');
+  finally
+    WithIt.Free;
+    Plain.Free;
+  end;
 end;
 
 
@@ -2275,6 +2377,230 @@ begin
   FToggle.HeaderPosition := hpBottom;
   Assert.AreEqual(W, FToggle.Width);
   Assert.AreEqual(H, FToggle.Height);
+end;
+
+// --- Right to left ---
+
+// On lies to the left, so the thumb rests at the right end while off, the way
+// WinUI, Android and iOS mirror a switch
+procedure TToggleSwitchTest.RightToLeft_ShouldRestTheThumbAtTheRightEnd;
+var
+  Bmp: TBitmap;
+  Y: Integer;
+begin
+  FToggle.ThumbColorOff := clRed;
+  RightToLeft;
+  Y := FToggle.Height div 2;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[ThumbOnX, Y],
+      'Off, the thumb rests at the right end');
+    Assert.IsTrue(Bmp.Canvas.Pixels[ThumbOffX, Y] <> TColor(clRed),
+      'and no longer at the left one');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+procedure TToggleSwitchTest.RightToLeft_FromTheForm_ShouldReachTheSwitch;
+var
+  Bmp: TBitmap;
+begin
+  FToggle.ThumbColorOff := clRed;
+  SysLocale.MiddleEast := True;
+  FForm.BiDiMode := bdRightToLeft;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[ThumbOnX, FToggle.Height div 2],
+      'ParentBiDiMode carries the direction of the form down to the switch');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+procedure TToggleSwitchTest.RightToLeft_DragLeft_ShouldTurnOn;
+begin
+  RightToLeft;
+  FToggle.OnChange := HandleOnChange;
+  Press(ThumbOnX);
+  MoveTo(ThumbOnX - DragTravel div 2 - 1);
+  Release(ThumbOnX - DragTravel div 2 - 1);
+  Assert.IsTrue(FToggle.Checked, 'On lies to the left, so a drag that way turns the switch on');
+  Assert.IsTrue(FOnChangeFired, 'and OnChange says so');
+end;
+
+procedure TToggleSwitchTest.RightToLeft_DragRight_ShouldNotToggle;
+begin
+  RightToLeft;
+  FToggle.OnChange := HandleOnChange;
+  Press(ThumbOnX);
+  // An off switch has no room to the right, so the thumb never moves
+  MoveTo(ThumbOnX + 50);
+  Release(ThumbOnX + 50);
+  Assert.IsFalse(FToggle.Checked, 'A drag away from On changes nothing');
+  Assert.IsFalse(FOnChangeFired, 'and stays quiet about it');
+end;
+
+procedure TToggleSwitchTest.RightToLeft_DragRight_FromOn_ShouldTurnOff;
+begin
+  FToggle.Checked := True;
+  RightToLeft;
+  FOnChangeFired := False;
+  FToggle.OnChange := HandleOnChange;
+  // On rests at the left end, so that is where the thumb is taken hold of
+  Press(ThumbOffX);
+  MoveTo(ThumbOffX + DragTravel div 2 + 1);
+  Release(ThumbOffX + DragTravel div 2 + 1);
+  Assert.IsFalse(FToggle.Checked, 'Off lies to the right, so a drag that way turns the switch off');
+  Assert.IsTrue(FOnChangeFired, 'and OnChange says so');
+end;
+
+// TextPosition names the side the way the text runs, as TCheckBox reads
+// Alignment, so the default tpRight keeps the caption after the switch
+procedure TToggleSwitchTest.RightToLeft_TextPosition_Right_ShouldPutTheCaptionOnTheLeft;
+var
+  Bmp: TBitmap;
+  Y: Integer;
+begin
+  FToggle.ShowText := True;
+  FToggle.ThumbColorOff := clRed;
+  RightToLeft;
+  Y := FToggle.Height div 2;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed),
+      Bmp.Canvas.Pixels[FToggle.Width - TrackAreaWidth + ThumbOnX, Y],
+      'The track sits at the right end, past the caption');
+    Assert.IsTrue(Bmp.Canvas.Pixels[ThumbOffX, Y] <> TColor(clRed),
+      'and no longer at the left end, which the caption now has');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// The column is as wide as the wider caption, and the narrower one keeps to
+// the switch's side of it, as it does left to right
+procedure TToggleSwitchTest.RightToLeft_ShorterCaption_ShouldKeepToTheSwitch;
+var
+  Bmp: TBitmap;
+  Column, First, Last: Integer;
+begin
+  FToggle.ShowText := True;
+  FToggle.TextOff := 'WWWW';
+  FToggle.TextOn := 'I';
+  FToggle.Checked := True;
+  RightToLeft;
+  Column := CaptionWidth;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    InkColumns(Bmp, 0, Column, First, Last);
+    Assert.IsTrue(Last >= Column - 3, 'The I sits at the right end of its column, next to the switch');
+    Assert.IsTrue(First > Column div 2, 'and not at the left end, where a left-to-right layout keeps it');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// The mirror of HeaderAlignment_ShouldCarryTheSwitchWithIt: aligned left the
+// way the text runs, the header and the switch sit against the right edge
+procedure TToggleSwitchTest.RightToLeft_HeaderAlignment_Left_ShouldPutTheSwitchAtTheRightEdge;
+var
+  Centred, ToTheLeft: TBitmap;
+  First, Last: Integer;
+begin
+  Centred := nil;
+  ToTheLeft := nil;
+  try
+    FToggle.HeaderText := 'A header far wider than the switch';
+    FToggle.ShowHeader := True;
+    RightToLeft;
+    FToggle.HeaderAlignment := taCenter;
+    Centred := RenderToBitmap(FToggle);
+    FToggle.HeaderAlignment := taLeftJustify;
+    ToTheLeft := RenderToBitmap(FToggle);
+    DifferingColumns(Centred, ToTheLeft, First, Last, FToggle.Height - TrackAreaHeight);
+    Assert.IsTrue(Last >= FToggle.Width - 3, 'Aligned left, the switch sits against the right edge');
+    Assert.IsTrue(First < FToggle.Width - TrackAreaWidth,
+      'and centred it began further left than the right-aligned one does');
+  finally
+    ToTheLeft.Free;
+    Centred.Free;
+  end;
+end;
+
+// A control wider than its switch and caption keeps them at the edge the text
+// starts from, header or no header
+procedure TToggleSwitchTest.RightToLeft_WithoutHeader_ShouldPutTheSwitchAtTheRightEdge;
+var
+  Bmp: TBitmap;
+  Y: Integer;
+begin
+  FToggle.ThumbColorOff := clRed;
+  FToggle.AutoSize := False;
+  FToggle.Width := 200;
+  RightToLeft;
+  Y := FToggle.Height div 2;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[200 - TrackAreaWidth + ThumbOnX, Y],
+      'The switch sits against the right edge of the wider control');
+    Assert.IsTrue(Bmp.Canvas.Pixels[ThumbOnX, Y] <> TColor(clRed),
+      'and not at the left one');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// Reading right to left puts a full stop at the left end of a Latin line,
+// while the layout stays where it was: this mode changes the reading alone
+procedure TToggleSwitchTest.RightToLeft_ReadingOnly_ShouldReorderTheText;
+var
+  LeftToRight, Reordered: TBitmap;
+begin
+  LeftToRight := nil;
+  Reordered := nil;
+  try
+    FToggle.ThumbColorOff := clRed;
+    FToggle.ShowText := True;
+    FToggle.TextOff := 'Off.';
+    FToggle.ShowHeader := True;
+    FToggle.HeaderText := 'Header.';
+    LeftToRight := RenderToBitmap(FToggle);
+    RightToLeft(bdRightToLeftReadingOnly);
+    Reordered := RenderToBitmap(FToggle);
+    // The switch band is the last TrackAreaHeight rows, below the header
+    Assert.AreEqual(TColor(clRed),
+      Reordered.Canvas.Pixels[ThumbOffX, FToggle.Height - TrackAreaHeight div 2],
+      'The layout stayed left to right');
+    Assert.IsTrue(DescribeDifference(LeftToRight, Reordered) <> '',
+      'while the full stops moved to the other end of their lines');
+  finally
+    Reordered.Free;
+    LeftToRight.Free;
+  end;
+end;
+
+// A switch at the far end of its header stays where it is on the form when
+// the header grows, which takes the indent remembered after the change of
+// direction, not the one from before it
+procedure TToggleSwitchTest.RightToLeft_Changed_ShouldKeepTheControlAndTheTrackInPlace;
+var
+  L, W, TrackBefore: Integer;
+begin
+  FToggle.Left := 100;
+  FToggle.ShowHeader := True;
+  FToggle.HeaderText := 'A header far wider than the switch';
+  FToggle.HeaderAlignment := taLeftJustify;
+  L := FToggle.Left;
+  W := FToggle.Width;
+  RightToLeft;
+  Assert.AreEqual(L, FToggle.Left, 'The switch crosses to the far end of the header without the control moving');
+  Assert.AreEqual(W, FToggle.Width, 'or changing size');
+  TrackBefore := FToggle.Left + FToggle.Width - TrackAreaWidth;
+  FToggle.HeaderText := 'A header far wider than the switch, and wider still';
+  Assert.IsTrue(FToggle.Left < L, 'A wider header grows the control leftwards, away from the switch');
+  Assert.AreEqual(TrackBefore, FToggle.Left + FToggle.Width - TrackAreaWidth,
+    'and the track itself did not move');
 end;
 
 // --- Published API ---

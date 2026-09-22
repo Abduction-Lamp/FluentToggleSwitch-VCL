@@ -2,8 +2,8 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'TFluentToggleSwitch Demo'
-  ClientHeight = 288
-  ClientWidth = 540
+  ClientHeight = 346
+  ClientWidth = 584
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,8 +15,8 @@ object Form1: TForm1
     AlignWithMargins = True
     Left = 6
     Top = 3
-    Width = 528
-    Height = 282
+    Width = 572
+    Height = 340
     Margins.Left = 6
     Margins.Right = 6
     Align = alClient
@@ -171,6 +171,26 @@ object Form1: TForm1
         Column = 5
         Control = FluentToggleSwitch12
         Row = 6
+      end
+      item
+        Column = 1
+        Control = Label13
+        Row = 7
+      end
+      item
+        Column = 2
+        Control = FluentToggleSwitch13
+        Row = 7
+      end
+      item
+        Column = 4
+        Control = Label14
+        Row = 7
+      end
+      item
+        Column = 5
+        Control = FluentToggleSwitch14
+        Row = 7
       end>
     ExpandStyle = emFixedSize
     RowCollection = <
@@ -194,16 +214,19 @@ object Form1: TForm1
       end
       item
         SizeStyle = ssAuto
+      end
+      item
+        SizeStyle = ssAuto
       end>
     TabOrder = 0
     ExplicitWidth = 518
-    ExplicitHeight = 250
+    ExplicitHeight = 308
     DesignSize = (
-      528
-      282)
+      572
+      340)
     object LabelGroupKeyboard: TLabel
       AlignWithMargins = True
-      Left = 46
+      Left = 62
       Top = 3
       Width = 94
       Height = 15
@@ -223,7 +246,7 @@ object Form1: TForm1
     end
     object LabelGroupNoKeyboard: TLabel
       AlignWithMargins = True
-      Left = 281
+      Left = 297
       Top = 3
       Width = 139
       Height = 15
@@ -242,7 +265,7 @@ object Form1: TForm1
     end
     object Label1: TLabel
       AlignWithMargins = True
-      Left = 102
+      Left = 118
       Top = 24
       Width = 38
       Height = 22
@@ -250,13 +273,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Default'
       Layout = tlCenter
-      ExplicitLeft = 92
-      ExplicitTop = 25
+      ExplicitLeft = 102
       ExplicitHeight = 15
     end
     object FluentToggleSwitch1: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 178
+      Left = 194
       Top = 24
       Width = 42
       Height = 22
@@ -266,11 +288,11 @@ object Form1: TForm1
       DoubleBuffered = True
       ParentDoubleBuffered = False
       TabOrder = 0
-      ExplicitLeft = 168
+      ExplicitLeft = 140
     end
     object Label6: TLabel
       AlignWithMargins = True
-      Left = 365
+      Left = 381
       Top = 24
       Width = 55
       Height = 22
@@ -278,13 +300,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Text = Left'
       Layout = tlCenter
-      ExplicitLeft = 363
-      ExplicitTop = 25
+      ExplicitLeft = 365
       ExplicitHeight = 15
     end
     object FluentToggleSwitch6: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 445
+      Left = 475
       Top = 24
       Width = 70
       Height = 22
@@ -299,11 +320,11 @@ object Form1: TForm1
       KeyboardToggle = False
       ShowText = True
       TextPosition = tpLeft
-      ExplicitLeft = 435
+      ExplicitLeft = 421
     end
     object Label2: TLabel
       AlignWithMargins = True
-      Left = 30
+      Left = 46
       Top = 52
       Width = 110
       Height = 22
@@ -311,13 +332,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Checked = True (On)'
       Layout = tlCenter
-      ExplicitLeft = 20
-      ExplicitTop = 53
+      ExplicitLeft = 30
       ExplicitHeight = 15
     end
     object FluentToggleSwitch2: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 178
+      Left = 194
       Top = 52
       Width = 42
       Height = 22
@@ -329,11 +349,11 @@ object Form1: TForm1
       Checked = True
       TabOrder = 2
       OnChange = FluentToggleSwitch2Change
-      ExplicitLeft = 168
+      ExplicitLeft = 140
     end
     object Label7: TLabel
       AlignWithMargins = True
-      Left = 357
+      Left = 373
       Top = 52
       Width = 63
       Height = 22
@@ -341,13 +361,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Text = Right'
       Layout = tlCenter
-      ExplicitLeft = 355
-      ExplicitTop = 53
+      ExplicitLeft = 357
       ExplicitHeight = 15
     end
     object FluentToggleSwitch7: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 445
+      Left = 475
       Top = 52
       Width = 70
       Height = 22
@@ -362,11 +381,11 @@ object Form1: TForm1
       ShowFocus = False
       KeyboardToggle = False
       ShowText = True
-      ExplicitLeft = 435
+      ExplicitLeft = 421
     end
     object Label3: TLabel
       AlignWithMargins = True
-      Left = 37
+      Left = 53
       Top = 80
       Width = 103
       Height = 22
@@ -374,13 +393,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Enable = False (Off)'
       Layout = tlCenter
-      ExplicitLeft = 27
-      ExplicitTop = 81
+      ExplicitLeft = 37
       ExplicitHeight = 15
     end
     object FluentToggleSwitch3: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 178
+      Left = 194
       Top = 80
       Width = 42
       Height = 22
@@ -392,11 +410,11 @@ object Form1: TForm1
       Enabled = False
       TabOrder = 8
       OnChange = FluentToggleSwitch3Change
-      ExplicitLeft = 168
+      ExplicitLeft = 140
     end
     object Label8: TLabel
       AlignWithMargins = True
-      Left = 318
+      Left = 334
       Top = 80
       Width = 102
       Height = 22
@@ -404,13 +422,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Enable = False (On)'
       Layout = tlCenter
-      ExplicitLeft = 317
-      ExplicitTop = 81
+      ExplicitLeft = 318
       ExplicitHeight = 15
     end
     object FluentToggleSwitch8: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 445
+      Left = 475
       Top = 80
       Width = 70
       Height = 22
@@ -427,11 +444,11 @@ object Form1: TForm1
       KeyboardToggle = False
       OnChange = FluentToggleSwitch8Change
       ShowText = True
-      ExplicitLeft = 435
+      ExplicitLeft = 421
     end
     object Label4: TLabel
       AlignWithMargins = True
-      Left = 68
+      Left = 84
       Top = 108
       Width = 72
       Height = 42
@@ -439,13 +456,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Custom color'
       Layout = tlCenter
-      ExplicitLeft = 60
-      ExplicitTop = 109
+      ExplicitLeft = 68
       ExplicitHeight = 15
     end
     object FluentToggleSwitch4: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 178
+      Left = 194
       Top = 118
       Width = 42
       Height = 22
@@ -461,11 +477,11 @@ object Form1: TForm1
       TrackColorOn = clLimegreen
       ThumbColorOff = clKhaki
       ThumbColorOn = clGold
-      ExplicitLeft = 168
+      ExplicitLeft = 140
     end
     object Label9: TLabel
       AlignWithMargins = True
-      Left = 382
+      Left = 398
       Top = 126
       Width = 38
       Height = 24
@@ -474,13 +490,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Header'
       Layout = tlCenter
-      ExplicitLeft = 381
-      ExplicitTop = 127
+      ExplicitLeft = 382
       ExplicitHeight = 15
     end
     object FluentToggleSwitch9: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 459
+      Left = 489
       Top = 108
       Width = 42
       Height = 42
@@ -500,11 +515,12 @@ object Form1: TForm1
       HeaderFont.Height = -12
       HeaderFont.Name = 'Consolas'
       HeaderFont.Style = [fsBold]
-      ExplicitLeft = 449
+      ParentHeaderFont = False
+      ExplicitLeft = 435
     end
     object Label5: TLabel
       AlignWithMargins = True
-      Left = 48
+      Left = 64
       Top = 156
       Width = 92
       Height = 45
@@ -512,13 +528,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Animated = False'
       Layout = tlCenter
-      ExplicitLeft = 38
-      ExplicitTop = 157
+      ExplicitLeft = 48
       ExplicitHeight = 15
     end
     object FluentToggleSwitch5: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 178
+      Left = 194
       Top = 167
       Width = 42
       Height = 22
@@ -529,11 +544,11 @@ object Form1: TForm1
       ParentDoubleBuffered = False
       Animated = False
       TabOrder = 7
-      ExplicitLeft = 168
+      ExplicitLeft = 140
     end
     object Label10: TLabel
       AlignWithMargins = True
-      Left = 328
+      Left = 344
       Top = 153
       Width = 92
       Height = 30
@@ -543,13 +558,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Header = Bottom'
       Layout = tlCenter
-      ExplicitLeft = 327
-      ExplicitTop = 154
+      ExplicitLeft = 328
       ExplicitHeight = 15
     end
     object FluentToggleSwitch10: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 459
+      Left = 489
       Top = 157
       Width = 42
       Height = 43
@@ -572,11 +586,12 @@ object Form1: TForm1
       HeaderFont.Height = -12
       HeaderFont.Name = 'Segoe UI'
       HeaderFont.Style = [fsUnderline]
-      ExplicitLeft = 449
+      ParentHeaderFont = False
+      ExplicitLeft = 435
     end
     object Label11: TLabel
       AlignWithMargins = True
-      Left = 29
+      Left = 45
       Top = 238
       Width = 111
       Height = 21
@@ -585,12 +600,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Header and text (Off)'
       Layout = tlCenter
-      ExplicitLeft = 18
+      ExplicitLeft = 29
       ExplicitHeight = 15
     end
     object FluentToggleSwitch11: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 164
+      Left = 180
       Top = 216
       Width = 70
       Height = 43
@@ -606,11 +621,11 @@ object Form1: TForm1
       ShowText = True
       ShowHeader = True
       HeaderText = '&Header'
-      ExplicitLeft = 154
+      ExplicitLeft = 126
     end
     object Label12: TLabel
       AlignWithMargins = True
-      Left = 300
+      Left = 316
       Top = 238
       Width = 120
       Height = 21
@@ -619,12 +634,12 @@ object Form1: TForm1
       Align = alRight
       Caption = 'Every colour of its own'
       Layout = tlCenter
-      ExplicitLeft = 298
+      ExplicitLeft = 300
       ExplicitHeight = 15
     end
     object FluentToggleSwitch12: TFluentToggleSwitch
       AlignWithMargins = True
-      Left = 444
+      Left = 474
       Top = 216
       Width = 72
       Height = 43
@@ -659,7 +674,86 @@ object Form1: TForm1
       HeaderFont.Height = -12
       HeaderFont.Name = 'Segoe UI'
       HeaderFont.Style = [fsBold]
-      ExplicitLeft = 434
+      ParentHeaderFont = False
+      ExplicitLeft = 420
+    end
+    object Label13: TLabel
+      AlignWithMargins = True
+      Left = 15
+      Top = 296
+      Width = 141
+      Height = 21
+      Margins.Top = 34
+      Margins.Right = 12
+      Align = alRight
+      Caption = 'BiDiMode = bdRightToLeft'
+      Layout = tlCenter
+      ExplicitLeft = 3
+      ExplicitTop = 304
+      ExplicitHeight = 15
+    end
+    object FluentToggleSwitch13: TFluentToggleSwitch
+      AlignWithMargins = True
+      Left = 180
+      Top = 274
+      Width = 70
+      Height = 43
+      Margins.Left = 12
+      Margins.Top = 12
+      Margins.Right = 12
+      Anchors = []
+      BiDiMode = bdRightToLeft
+      DoubleBuffered = True
+      ParentBiDiMode = False
+      ParentDoubleBuffered = False
+      TabOrder = 12
+      ShowText = True
+      ShowHeader = True
+      HeaderText = 'Right to left'
+      HeaderAlignment = taLeftJustify
+      ExplicitLeft = 126
+    end
+    object Label14: TLabel
+      AlignWithMargins = True
+      Left = 341
+      Top = 296
+      Width = 95
+      Height = 21
+      Margins.Top = 34
+      Margins.Right = 12
+      Align = alRight
+      Caption = 'Text = Left, Arabic'
+      Layout = tlCenter
+      ExplicitLeft = 290
+      ExplicitTop = 304
+      ExplicitHeight = 15
+    end
+    object FluentToggleSwitch14: TFluentToggleSwitch
+      AlignWithMargins = True
+      Left = 460
+      Top = 274
+      Width = 100
+      Height = 43
+      Margins.Left = 12
+      Margins.Top = 12
+      Margins.Right = 12
+      Anchors = []
+      BiDiMode = bdRightToLeft
+      DoubleBuffered = True
+      ParentBiDiMode = False
+      ParentDoubleBuffered = False
+      TabStop = False
+      TabOrder = 13
+      ShowFocus = False
+      KeyboardToggle = False
+      ShowText = True
+      TextOn = #1578#1588#1594#1610#1604
+      TextOff = #1573#1610#1602#1575#1601
+      TextPosition = tpLeft
+      ShowHeader = True
+      HeaderText = #1605#1606' '#1575#1604#1610#1605#1610#1606' '#1573#1604#1609' '#1575#1604#1610#1587#1575#1585
+      HeaderAlignment = taLeftJustify
+      ExplicitLeft = 406
     end
   end
 end
