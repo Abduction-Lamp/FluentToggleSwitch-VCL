@@ -172,6 +172,9 @@ Both are written to a DFM only when they differ from those defaults. A
 descendant form therefore cannot reset either to the default by assigning it,
 which is the same limitation `Vcl.WinXCtrls.TToggleSwitch` has.
 
+An ampersand in either is drawn as one: only the header carries an
+accelerator.
+
 ### `TextPosition: TFluentTextPosition`
 
 Default `tpRight`. Which side of the track the caption goes, the way the text
@@ -216,10 +219,11 @@ Default `hpTop`. Above the switch or below it.
 
 ### `HeaderAlignment: TAlignment`
 
-Default `taCenter`. How the header is aligned when it is wider than the switch
-and its caption. The switch itself moves with it: aligned left, the switch sits
-at the left edge; centred, it sits in the middle. On a right-to-left form left
-and right swap, as they do for a `TLabel`.
+Default `taCenter`. Where the header sits over the switch and its caption:
+left, centred or right. When the header is the wider of the two, it is the
+switch that moves under the header instead: aligned left, the switch sits at
+the left edge; centred, in the middle. On a right-to-left form left and right
+swap, as they do for a `TLabel`.
 
 ### `HeaderSpacing: Integer`
 
@@ -256,8 +260,8 @@ Republished from the VCL and behaving as they do everywhere else:
 `ParentDoubleBuffered`, `ParentFont`, `ParentShowHint`, `PopupMenu`,
 `ShowHint`, `TabOrder`, `TabStop`, `Visible`.
 
-`AutoSize` and `TabStop` default to `True`, which differs from the VCL defaults
-they replace.
+`AutoSize`, `TabStop` and `DoubleBuffered` default to `True`, which differs
+from the VCL defaults they replace.
 
 `BiDiMode` mirrors the switch; see [Right to left](#right-to-left).
 
@@ -292,7 +296,8 @@ has already moved. A handler therefore reads the value the user just asked
 for. Assigning `Checked` in code does not raise it.
 
 The user can toggle the switch by clicking it, by dragging the thumb past the
-middle, or with the space bar. All three raise it.
+middle, with the space bar, or with the accelerator in the header. All four
+raise it.
 
 ### `OnDblClick: TNotifyEvent`
 
@@ -313,7 +318,8 @@ included. The switch's own idea of being hovered is narrower; see below.
 ## What answers the pointer
 
 The switch and its caption are the target. The header is not, and neither is
-the space beside the switch that a header wider than it leaves over.
+any space beside them that a wider control leaves over, whether under a wide
+header or with `AutoSize` off.
 
 This is the line WinUI draws as well: its hit-testable area spans the switch
 and the captions and stops short of the header.
@@ -323,9 +329,10 @@ header leaves the switch as it was.
 
 ### Dragging
 
-Pressing the thumb and moving the pointer drags it along the track. Released
-past the middle it changes the value; released short of it, it returns. The
-thumb cannot be dragged beyond either end.
+Pressing anywhere on the switch or its caption and moving the pointer sideways
+drags the thumb along the track. Released past the middle it changes the
+value; released short of it, it returns. The thumb cannot be dragged beyond
+either end.
 
 A press becomes a drag once the pointer has travelled four design pixels, so
 that a click with an unsteady hand is still a click.
@@ -346,7 +353,9 @@ down does not fire over and over, and a key released elsewhere never reaches
 the switch. It has to be the space bar alone: held with Shift, Ctrl or Alt it
 is left for whatever else wants it. Enter does nothing, as in WinUI.
 
-Clicking the switch gives it the focus, unless `TabStop` is off.
+Clicking the switch gives it the focus, unless `TabStop` is off. It has to be
+the left button, on the switch or its caption: a click on the header leaves the
+focus where it was.
 
 Alt plus the letter marked in `HeaderText` gives the switch the focus and
 toggles it, the way an accelerator works a check box. Both halves follow the
@@ -403,10 +412,11 @@ With `AutoSize` on, which is the default, the switch sizes itself:
 |---|---|
 | Track | 40 × 20 |
 | The area the switch occupies | 42 × 22 |
-| With a caption | plus `TextSpacing` less one, plus the wider caption |
+| With a caption | plus `TextSpacing` less one, plus the wider caption; at least as tall as the caption's line |
 | With a header | plus the header's line height and `HeaderSpacing`; at least as wide as the header |
 
-Everything scales with the display, from `CurrentPPI`. The switch works its
+Everything scales with the display, from `CurrentPPI`, and with the form: a
+`ScaleBy` on it scales the switch's geometry too. The switch works its
 geometry out from the design numbers at every scale rather than rescaling
 rounded values, so moving a form between monitors of different scale and back
 leaves it exactly where it started.
@@ -414,8 +424,10 @@ leaves it exactly where it started.
 Turning the header on grows the control. With `AutoSize` on and `Align` at
 `alNone`, the switch then moves itself so that the track stays where it was
 and the room comes out of the form instead. A form that already recorded a
-position keeps it: this only happens when the change comes from a property
-being set, not from loading, scaling or a new window.
+position keeps it: this only happens when the change comes from one of the
+text or header properties being set, not from loading, scaling or a new
+window. A change of `Font` or `HeaderFont` is the exception: the header grows
+in place, and the track moves down with it.
 
 ---
 
@@ -447,7 +459,9 @@ arrived. A switch at rest costs nothing.
 ## Streaming
 
 Every published property makes the round trip through a DFM. Properties left
-at their defaults are not written.
+at their defaults are not written, with one exception: `DoubleBuffered` is
+set in the constructor, which clears `ParentDoubleBuffered`, and both go into
+every DFM.
 
 Loading does not raise `OnChange`, and does not move the control: the form
 already recorded where the switch ended up, header and all. The switch
@@ -467,7 +481,9 @@ up with the captions of the labels, edits and buttons around it. The baseline
 is published whether or not the caption is shown, the way a check box
 publishes one without a caption, so a bare switch lines up with the text
 beside it too. A vertical centre guide is not possible, the designer having no
-guide type for it.
+guide type for it. The guidelines are registered for
+`TCustomFluentToggleSwitch`, so a component descending from it keeps the
+baseline.
 
 ---
 
