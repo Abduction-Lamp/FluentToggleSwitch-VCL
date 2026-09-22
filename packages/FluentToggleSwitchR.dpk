@@ -28,7 +28,7 @@
 {$DESCRIPTION 'Fluent Toggle Switch 2.1.0 runtime'}
 {$LIBSUFFIX AUTO}
 {$RUNONLY}
-{$IMPLICITBUILD ON}
+{$IMPLICITBUILD OFF}
 
 requires
   rtl,
