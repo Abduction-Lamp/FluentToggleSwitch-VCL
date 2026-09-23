@@ -45,10 +45,11 @@ magick toggle-left.png toggle-left-2.png toggle-left-3.png toggle-left-5.png \
 
 - `TFluentToggleSwitch.png`, `TFluentToggleSwitch16.png`,
   `TFluentToggleSwitch32.png`, `TFluentToggleSwitch128.png` — то, что IDE
-  показывает с 11-й версии: PNG с прозрачностью в 24, 16, 32 и 128 пикселей,
-  ресурсы `RCDATA` с суффиксом `_PNG`. Первые три — копии `toggle-left-3.png`,
-  `toggle-left.png` и `toggle-left-5.png`; 128 получен из
-  `toggle-left-18.png`: `magick toggle-left-18.png -resize 128x128 ../TFluentToggleSwitch128.png`.
+  показывает начиная с 10.2.2: PNG с прозрачностью в 24, 16, 32 и 128
+  пикселей, ресурсы `RCDATA` с суффиксом `_PNG`. Первые три попиксельно
+  совпадают с `toggle-left-3.png`, `toggle-left.png` и `toggle-left-5.png`;
+  128 получен из `toggle-left-18.png`:
+  `magick toggle-left-18.png -resize 128x128 ../TFluentToggleSwitch128.png`.
 - `TFluentToggleSwitch.bmp`, `TFluentToggleSwitch16.bmp`,
   `TFluentToggleSwitch32.bmp` — растровые версии на белом фоне, запасной
   вариант для IDE без поддержки PNG; левый нижний пиксель считается
@@ -58,8 +59,9 @@ magick toggle-left.png toggle-left-2.png toggle-left-3.png toggle-left-5.png \
 
 ```
 "%BDS%\bin\brcc32.exe" FluentToggleSwitchIcons.rc
-ren FluentToggleSwitchIcons.RES FluentToggleSwitchIcons.dcr
+move /y FluentToggleSwitchIcons.RES FluentToggleSwitchIcons.dcr
 ```
 
 `brcc32` называет результат по имени `.rc` до первой точки и навязывает
-расширение `.RES`, отсюда переименование. `.dcr` — обычный файл `.RES`.
+расширение `.RES`, отсюда переименование поверх прежнего `.dcr`. `.dcr` —
+обычный файл `.RES`.
