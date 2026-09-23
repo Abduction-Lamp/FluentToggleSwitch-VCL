@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The outline of the track is one pixel again. Since 2.0.0 it was drawn across
+  two rows of pixels at half strength on any display at 100%: the stroke was
+  moved inside the 40 × 20 track on the assumption that integer coordinates
+  fall on pixel edges, while GDI+ puts them on pixel centres unless told
+  otherwise. It is told now, so the outline, the track fill and the thumb all
+  sit on the pixel grid, at 200% as well. Fractional scales are antialiased as
+  before.
+
 ## [3.0.0] - 2026-09-23
 
 The release takes the major number: the rename below breaks every
@@ -375,6 +387,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
 
+[Unreleased]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v3.0.0...HEAD
 [3.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
