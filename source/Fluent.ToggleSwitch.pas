@@ -1680,6 +1680,10 @@ begin
   try
     G := TGPGraphics.Create(Canvas.Handle);
     G.SetSmoothingMode(SmoothingModeAntiAlias);
+    // The geometry below puts edges on integer coordinates. GDI+ takes those
+    // for pixel centres unless told otherwise, and then a one-pixel outline
+    // lands across two rows at half strength
+    G.SetPixelOffsetMode(PixelOffsetModeHalf);
 
     Path := TGPGraphicsPath.Create;
     Brush := TGPSolidBrush.Create(0);

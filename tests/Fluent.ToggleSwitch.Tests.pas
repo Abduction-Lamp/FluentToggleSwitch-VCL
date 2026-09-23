@@ -308,6 +308,9 @@ type
     procedure ThumbColors_ShouldReachTheThumb;
 
     [Test]
+    procedure Outline_ShouldBeOnePixelWide;
+
+    [Test]
     procedure Color_ShouldFillTheBackground;
 
     [Test]
@@ -1892,6 +1895,33 @@ begin
   try
     Assert.AreEqual(TColor(clLime), Bmp.Canvas.Pixels[ThumbOffX, FToggle.Height div 2],
       'and so does an on one');
+  finally
+    Bmp.Free;
+  end;
+end;
+
+// The track is 40 × 20 inside a 42 × 22 area, so at DesignPPI its outline is
+// row 1 and row 20, with a row of background above and below. GDI+ puts
+// integer coordinates on pixel centres unless told otherwise, and then the
+// one-pixel outline is drawn across two rows at half strength
+procedure TToggleSwitchTest.Outline_ShouldBeOnePixelWide;
+var
+  Bmp: TBitmap;
+  X: Integer;
+  Background: TColor;
+begin
+  FToggle.TrackFrameColor := clRed;
+  Bmp := RenderToBitmap(FToggle);
+  try
+    // The middle column, on the straight run of the pill
+    X := TrackAreaWidth div 2;
+    Background := Bmp.Canvas.Pixels[X, 0];
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[X, 1], 'The top outline fills its row of pixels');
+    Assert.IsTrue(Bmp.Canvas.Pixels[X, 2] <> TColor(clRed), 'and stops at that row');
+    Assert.AreEqual(TColor(clRed), Bmp.Canvas.Pixels[X, TrackAreaHeight - 2],
+      'The bottom outline fills its row');
+    Assert.AreEqual(Background, Bmp.Canvas.Pixels[X, TrackAreaHeight - 1],
+      'and the row below it is background');
   finally
     Bmp.Free;
   end;
