@@ -1,12 +1,8 @@
-# TFluentToggleSwitch - Windows 11 toggle switch for the VCL
+# <img src="resources/assets/toggle-left.svg" alt="" width="48" align="absmiddle">&nbsp;FluentToggleSwitch-VCL
 
-<img src="resources/assets/toggle-left-18.png" width="72" alt="">
-
-[![Release](https://img.shields.io/github/v/release/Abduction-Lamp/FluentToggleSwitch-VCL)](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/releases/latest) [![Licence](https://img.shields.io/github/license/Abduction-Lamp/FluentToggleSwitch-VCL)](LICENSE)
-
-TFluentToggleSwitch is a VCL toggle switch for Delphi that looks and behaves
-like the one in Windows 11. It draws itself with GDI+ instead of wrapping a
-system control, so it looks the same on Windows 7, 8, 10 and 11.
+TFluentToggleSwitch is a Windows 11 toggle switch for the VCL. It looks and
+behaves like the one in Windows 11, and draws itself with GDI+ instead of
+wrapping a system control, so it looks the same on Windows 7, 8, 10 and 11.
 
 ![Demo](docs/images/demo-screenshot-001.png)
 
@@ -112,3 +108,7 @@ docs/       the API reference and screenshots
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+---
+
+[![Release](https://img.shields.io/github/v/release/Abduction-Lamp/FluentToggleSwitch-VCL)](https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/releases/latest) [![Licence](https://img.shields.io/github/license/Abduction-Lamp/FluentToggleSwitch-VCL)](LICENSE)

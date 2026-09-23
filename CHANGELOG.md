@@ -1,11 +1,6 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [3.0.1] - 2026-09-23
+## Version 3.0.1 - 2026-09-23
 
 ### Fixed
 
@@ -24,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   picks by scale; the bitmaps stay as the fallback for an IDE that reads no
   PNG. The files the `.dcr` is built from are in the repository.
 
-## [3.0.0] - 2026-09-23
+## Version 3.0.0 - 2026-09-23
 
 The release takes the major number: the rename below breaks every
 installation of 2.1.0.
@@ -129,7 +124,7 @@ The `.bpl` files are renamed, so the IDE still has the old ones registered.
    simply overwritten and must stay.
 3. Build and install the packages again, as in **Installing** in the README.
 
-## [2.1.0] - 2026-09-18
+## Version 2.1.0 - 2026-09-18
 
 ### Changed
 
@@ -165,7 +160,7 @@ Installing the packages no longer makes the unit visible on its own.
 Nothing in the component itself changed: same unit, same class, same
 properties.
 
-## [2.0.0] - 2026-09-17
+## Version 2.0.0 - 2026-09-17
 
 The switch answers the keyboard, carries a header, and follows the accent
 colour while the program runs. The unit and the package are renamed, the
@@ -284,7 +279,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 5. Read every `OnClick` handler again. It now fires only on a real toggle, and
    after the value has moved.
 
-## [1.6.0] - 2026-09-10
+## Version 1.6.0 - 2026-09-10
 
 ### Added
 
@@ -294,7 +289,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 
 - The switch no longer takes focus. Clicking it leaves focus where it was, and `TabStop` now defaults to `False`, so the Tab key skips it. It already ignored the keyboard and drew no focus indicator, so the focus it held was invisible and did nothing.
 
-## [1.5.0] - 2026-09-10
+## Version 1.5.0 - 2026-09-10
 
 ### Changed
 
@@ -305,7 +300,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 - The track is positioned on whole pixels so its outline stays crisp when the text makes the control an odd number of pixels tall.
 - Fully transparent fills and strokes are skipped instead of being rasterized.
 
-## [1.4.0] - 2026-09-10
+## Version 1.4.0 - 2026-09-10
 
 ### Fixed
 
@@ -320,7 +315,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 - The On track uses the accent color configured in Windows, read from the system palette. Without it the component falls back to `#0067C0`, the Windows 11 default.
 - Hover and press lighten the On track toward the background by lowering opacity to 0.9 and 0.8. Previously they darkened it, which is the opposite of the WinUI behavior. The previous shades came from the Windows 10 palette.
 
-## [1.3.0] - 2026-09-10
+## Version 1.3.0 - 2026-09-10
 
 ### Added
 
@@ -341,7 +336,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 - Space and Enter no longer toggle the switch.
 - The focus rectangle.
 
-## [1.2.0] - 2026-03-13
+## Version 1.2.0 - 2026-03-13
 
 ### Added
 
@@ -362,7 +357,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 - Only the track responds to clicks; the text label is passive.
 - Compiler warnings: missing units and unused variables.
 
-## [1.1.0] - 2026-03-12
+## Version 1.1.0 - 2026-03-12
 
 ### Added
 
@@ -378,7 +373,7 @@ A 1.7.0 was prepared and never released; everything it held is here.
 - Negative `TextSpacing` is clamped to 0.
 - The test runner waits for input before closing; FastMM4 is compiled conditionally.
 
-## [1.0.1] - 2026-03-12
+## Version 1.0.1 - 2026-03-12
 
 ### Added
 
@@ -390,19 +385,6 @@ A 1.7.0 was prepared and never released; everything it held is here.
 - `TToggleSwitch` renamed to `TFluentToggleSwitch` to avoid the conflict with `Vcl.WinXCtrls`.
 - Compiled units go to the global Dcp directory, so `uses ToggleSwitch;` works without a Search Path entry.
 
-## [1.0.0] - 2026-03-12
+## Version 1.0.0 - 2026-03-12
 
 First public release: GDI+ rendering, EaseOutCubic animation, 8 visual states, WinUI 3 Light colors, mouse and keyboard input, design-time package.
-
-[3.0.1]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v3.0.0...v3.0.1
-[3.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.1.0...v3.0.0
-[2.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.6.0...v2.0.0
-[1.6.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.0.1...v1.1.0
-[1.0.1]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/Abduction-Lamp/FluentToggleSwitch-VCL/releases/tag/v1.0.0
