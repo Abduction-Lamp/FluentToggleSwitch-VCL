@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sit on the pixel grid, at 200% as well. Fractional scales are antialiased as
   before.
 
+- The palette icon carries transparency and comes in four sizes. It was three
+  bitmaps on white, so the palette showed a white halo around it and stretched
+  it on a scaled display. The `.dcr` now holds PNG images at 16, 24, 32 and
+  128 pixels as well, which the IDE composites over its own background and
+  picks by scale; the bitmaps stay as the fallback for an IDE that reads no
+  PNG. The files the `.dcr` is built from are in the repository.
+
 ## [3.0.0] - 2026-09-23
 
 The release takes the major number: the rename below breaks every
